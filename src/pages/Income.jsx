@@ -19,6 +19,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../components/ui/table";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+} from "../components/ui/pagination";
+
+const PAGE_SIZE = 10;
 
 export default function Income() {
   const [loading, setLoading] = useState(false);
@@ -30,6 +48,7 @@ export default function Income() {
   const isSubmittingRef = useRef(false);
   const lastSubmitRef = useRef({ signature: "", time: 0 });
   const [selectedStock, setSelectedStock] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const duplicateWindowMs = 5000;
 
   const [formData, setFormData] = useState({
@@ -50,6 +69,11 @@ export default function Income() {
     fetchInventories();
     fetchClients();
   }, []);
+
+  useEffect(() => {
+    const totalP = Math.max(1, Math.ceil(incomeList.length / PAGE_SIZE));
+    if (currentPage > totalP) setCurrentPage(1);
+  }, [incomeList.length]);
 
   useEffect(() => {
     const handleFocus = () => {
@@ -867,6 +891,18 @@ export default function Income() {
     }).format(amount);
   };
 
+  const totalItems = incomeList.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+  const safePage = Math.min(currentPage, totalPages);
+  const startIndex = (safePage - 1) * PAGE_SIZE;
+  const endIndex = Math.min(startIndex + PAGE_SIZE, totalItems);
+  const paginatedList = incomeList.slice(startIndex, endIndex);
+
+  const goToPage = (page) => {
+    const p = Math.max(1, Math.min(page, totalPages));
+    setCurrentPage(p);
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <div className="flex items-center justify-between mb-6">
@@ -1108,51 +1144,121 @@ export default function Income() {
               {formatCurrency(
                 incomeList.reduce((sum, item) => sum + item.total, 0),
               )}
+              {totalItems > 0 &&
+                ` · Mostrando ${startIndex + 1}-${endIndex} de ${totalItems} registros`}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              {incomeList.map((income) => (
-                <div
-                  key={income.id}
-                  className="flex items-center justify-between p-4 border border-border rounded-lg"
-                >
-                  <div className="flex-1">
-                    <p className="font-medium">{income.client_name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {income.concept} - {income.income_date}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {income.detail}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold text-success">
-                      {formatCurrency(income.total)}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {income.payment_method}
-                    </p>
-                  </div>
-                  <div className="flex items-center space-x-2 ml-4">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEdit(income)}
-                    >
-                      <Edit className="w-4 h-4 text-primary" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDelete(income.id)}
-                    >
-                      <Trash2 className="w-4 h-4 text-destructive" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Fecha</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Concepto</TableHead>
+                  <TableHead className="hidden md:table-cell">Detalle</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
+                  <TableHead className="hidden lg:table-cell">Método pago</TableHead>
+                  <TableHead className="w-[90px] text-right">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedList.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                      No hay ingresos registrados. Agrega uno con el botón &quot;Nuevo Ingreso&quot;.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  paginatedList.map((income) => (
+                    <TableRow key={income.id}>
+                      <TableCell className="text-muted-foreground">{income.income_date}</TableCell>
+                      <TableCell className="font-medium">{income.client_name}</TableCell>
+                      <TableCell>{income.concept}</TableCell>
+                      <TableCell className="hidden md:table-cell text-muted-foreground max-w-[200px] truncate" title={income.detail}>
+                        {income.detail || "—"}
+                      </TableCell>
+                      <TableCell className="text-right font-bold text-success">
+                        {formatCurrency(income.total)}
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell text-muted-foreground">
+                        {income.payment_method}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleEdit(income)}
+                            aria-label="Editar"
+                          >
+                            <Edit className="w-4 h-4 text-primary" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleDelete(income.id)}
+                            aria-label="Eliminar"
+                          >
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+            {totalItems > PAGE_SIZE && (
+              <Pagination className="mt-4">
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        goToPage(safePage - 1);
+                      }}
+                      className={
+                        safePage <= 1
+                          ? "pointer-events-none opacity-50"
+                          : "cursor-pointer"
+                      }
+                    />
+                  </PaginationItem>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <PaginationItem key={page}>
+                      <PaginationLink
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          goToPage(page);
+                        }}
+                        isActive={page === safePage}
+                        className="cursor-pointer"
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+                  <PaginationItem>
+                    <PaginationNext
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        goToPage(safePage + 1);
+                      }}
+                      className={
+                        safePage >= totalPages
+                          ? "pointer-events-none opacity-50"
+                          : "cursor-pointer"
+                      }
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            )}
           </CardContent>
         </Card>
       </main>

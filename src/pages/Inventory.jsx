@@ -17,7 +17,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../components/ui/table";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+} from "../components/ui/pagination";
 import { Plus, Trash2, Edit } from "lucide-react";
+
+const PAGE_SIZE = 10;
 
 export default function Inventory() {
   const [loading, setLoading] = useState(false);
@@ -25,6 +43,7 @@ export default function Inventory() {
   const [suppliers, setSuppliers] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const [formData, setFormData] = useState({
     concept: "",
@@ -51,6 +70,11 @@ export default function Inventory() {
     window.addEventListener("focus", handleFocus);
     return () => window.removeEventListener("focus", handleFocus);
   }, []);
+
+  useEffect(() => {
+    const totalP = Math.max(1, Math.ceil(inventoryList.length / PAGE_SIZE));
+    if (currentPage > totalP) setCurrentPage(1);
+  }, [inventoryList.length]);
 
   const fetchSuppliersData = async () => {
     console.log("[Inventory] Fetching suppliers data...");
@@ -508,6 +532,18 @@ export default function Inventory() {
     }).format(amount);
   };
 
+  const totalItems = inventoryList.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+  const safePage = Math.min(currentPage, totalPages);
+  const startIndex = (safePage - 1) * PAGE_SIZE;
+  const endIndex = Math.min(startIndex + PAGE_SIZE, totalItems);
+  const paginatedList = inventoryList.slice(startIndex, endIndex);
+
+  const goToPage = (page) => {
+    const p = Math.max(1, Math.min(page, totalPages));
+    setCurrentPage(p);
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <div className="flex items-center justify-between mb-6">
@@ -698,57 +734,127 @@ export default function Inventory() {
                   0,
                 ),
               )}
+              {totalItems > 0 &&
+                ` · Mostrando ${startIndex + 1}-${endIndex} de ${totalItems} registros`}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              {inventoryList.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-center justify-between p-4 border border-border rounded-lg"
-                >
-                  <div className="flex-1">
-                    <p className="font-medium">{item.concept}</p>
-                    <p className="text-sm text-muted-foreground">
-                      Cantidad: {item.quantity} | Stock: {item.stock}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Compra: {formatCurrency(item.purchase_value)} | Venta:{" "}
-                      {formatCurrency(item.sale_price)}
-                    </p>
-                    {item.supplier && (
-                      <p className="text-xs text-muted-foreground">
-                        Proveedor: {item.supplier}
-                      </p>
-                    )}
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold text-primary">
-                      {formatCurrency(item.stock * item.purchase_value)}
-                    </p>
-                    <p className="text-xs text-success">
-                      +{item.profit_margin}%
-                    </p>
-                  </div>
-                  <div className="flex space-x-2 ml-4">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEdit(item)}
-                    >
-                      <Edit className="w-4 h-4 text-primary" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDelete(item.id)}
-                    >
-                      <Trash2 className="w-4 h-4 text-destructive" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Concepto</TableHead>
+                  <TableHead className="hidden md:table-cell">Proveedor</TableHead>
+                  <TableHead>Cantidad</TableHead>
+                  <TableHead>Stock</TableHead>
+                  <TableHead className="hidden lg:table-cell">Compra</TableHead>
+                  <TableHead className="hidden lg:table-cell">Venta</TableHead>
+                  <TableHead>Margen</TableHead>
+                  <TableHead className="text-right">Valor stock</TableHead>
+                  <TableHead className="w-[90px] text-right">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedList.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
+                      No hay items en inventario. Agrega uno con el botón &quot;Nuevo Item&quot;.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  paginatedList.map((item) => (
+                    <TableRow key={item.id}>
+                      <TableCell className="font-medium">{item.concept}</TableCell>
+                      <TableCell className="hidden md:table-cell text-muted-foreground">
+                        {item.supplier || "—"}
+                      </TableCell>
+                      <TableCell>{item.quantity}</TableCell>
+                      <TableCell>{item.stock}</TableCell>
+                      <TableCell className="hidden lg:table-cell text-muted-foreground">
+                        {formatCurrency(item.purchase_value)}
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell text-muted-foreground">
+                        {formatCurrency(item.sale_price)}
+                      </TableCell>
+                      <TableCell className="text-success">+{item.profit_margin}%</TableCell>
+                      <TableCell className="text-right font-medium">
+                        {formatCurrency(item.stock * item.purchase_value)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleEdit(item)}
+                            aria-label="Editar"
+                          >
+                            <Edit className="w-4 h-4 text-primary" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleDelete(item.id)}
+                            aria-label="Eliminar"
+                          >
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+            {totalItems > PAGE_SIZE && (
+              <Pagination className="mt-4">
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        goToPage(safePage - 1);
+                      }}
+                      className={
+                        safePage <= 1
+                          ? "pointer-events-none opacity-50"
+                          : "cursor-pointer"
+                      }
+                    />
+                  </PaginationItem>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <PaginationItem key={page}>
+                      <PaginationLink
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          goToPage(page);
+                        }}
+                        isActive={page === safePage}
+                        className="cursor-pointer"
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+                  <PaginationItem>
+                    <PaginationNext
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        goToPage(safePage + 1);
+                      }}
+                      className={
+                        safePage >= totalPages
+                          ? "pointer-events-none opacity-50"
+                          : "cursor-pointer"
+                      }
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            )}
           </CardContent>
         </Card>
       </main>

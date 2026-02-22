@@ -18,6 +18,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../components/ui/table";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+} from "../components/ui/pagination";
+
+const PAGE_SIZE = 10;
 
 export default function Expenses() {
   const [loading, setLoading] = useState(false);
@@ -25,6 +43,7 @@ export default function Expenses() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [beneficiaries, setBeneficiaries] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const [formData, setFormData] = useState({
     expense_date: new Date().toISOString().split("T")[0],
@@ -39,6 +58,11 @@ export default function Expenses() {
     fetchExpensesData();
     fetchBeneficiaries();
   }, []);
+
+  useEffect(() => {
+    const totalP = Math.max(1, Math.ceil(expensesList.length / PAGE_SIZE));
+    if (currentPage > totalP) setCurrentPage(1);
+  }, [expensesList.length]);
 
   const fetchExpensesData = async () => {
     setLoading(true);
@@ -606,6 +630,18 @@ export default function Expenses() {
     }).format(amount);
   };
 
+  const totalItems = expensesList.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+  const safePage = Math.min(currentPage, totalPages);
+  const startIndex = (safePage - 1) * PAGE_SIZE;
+  const endIndex = Math.min(startIndex + PAGE_SIZE, totalItems);
+  const paginatedList = expensesList.slice(startIndex, endIndex);
+
+  const goToPage = (page) => {
+    const p = Math.max(1, Math.min(page, totalPages));
+    setCurrentPage(p);
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <div className="flex items-center justify-between mb-6">
@@ -771,51 +807,121 @@ export default function Expenses() {
               {formatCurrency(
                 expensesList.reduce((sum, item) => sum + item.total, 0),
               )}
+              {totalItems > 0 &&
+                ` · Mostrando ${startIndex + 1}-${endIndex} de ${totalItems} registros`}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              {expensesList.map((expense) => (
-                <div
-                  key={expense.id}
-                  className="flex items-center justify-between p-4 border border-border rounded-lg"
-                >
-                  <div className="flex-1">
-                    <p className="font-medium">{expense.payee_name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {expense.concept} - {expense.expense_date}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {expense.detail}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold text-destructive">
-                      {formatCurrency(expense.total)}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {expense.payment_method}
-                    </p>
-                  </div>
-                  <div className="flex items-center space-x-2 ml-4">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEdit(expense)}
-                    >
-                      <Edit className="w-4 h-4 text-primary" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDelete(expense.id)}
-                    >
-                      <Trash2 className="w-4 h-4 text-destructive" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Fecha</TableHead>
+                  <TableHead>Beneficiario</TableHead>
+                  <TableHead>Concepto</TableHead>
+                  <TableHead className="hidden md:table-cell">Detalle</TableHead>
+                  <TableHead className="text-right">Valor</TableHead>
+                  <TableHead className="hidden lg:table-cell">Método pago</TableHead>
+                  <TableHead className="w-[90px] text-right">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedList.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                      No hay gastos registrados. Agrega uno con el botón &quot;Nuevo Gasto&quot;.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  paginatedList.map((expense) => (
+                    <TableRow key={expense.id}>
+                      <TableCell className="text-muted-foreground">{expense.expense_date}</TableCell>
+                      <TableCell className="font-medium">{expense.payee_name}</TableCell>
+                      <TableCell>{expense.concept}</TableCell>
+                      <TableCell className="hidden md:table-cell text-muted-foreground max-w-[200px] truncate" title={expense.detail}>
+                        {expense.detail || "—"}
+                      </TableCell>
+                      <TableCell className="text-right font-bold text-destructive">
+                        {formatCurrency(expense.total)}
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell text-muted-foreground">
+                        {expense.payment_method}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleEdit(expense)}
+                            aria-label="Editar"
+                          >
+                            <Edit className="w-4 h-4 text-primary" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleDelete(expense.id)}
+                            aria-label="Eliminar"
+                          >
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+            {totalItems > PAGE_SIZE && (
+              <Pagination className="mt-4">
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        goToPage(safePage - 1);
+                      }}
+                      className={
+                        safePage <= 1
+                          ? "pointer-events-none opacity-50"
+                          : "cursor-pointer"
+                      }
+                    />
+                  </PaginationItem>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <PaginationItem key={page}>
+                      <PaginationLink
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          goToPage(page);
+                        }}
+                        isActive={page === safePage}
+                        className="cursor-pointer"
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+                  <PaginationItem>
+                    <PaginationNext
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        goToPage(safePage + 1);
+                      }}
+                      className={
+                        safePage >= totalPages
+                          ? "pointer-events-none opacity-50"
+                          : "cursor-pointer"
+                      }
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            )}
           </CardContent>
         </Card>
       </main>
