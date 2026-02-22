@@ -696,6 +696,9 @@ export default function Dashboard() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" id="dashboard-content">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">Inicio</h1>
+        </div>
         {/* Financial Summary Cards - arriba */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card>
@@ -703,10 +706,10 @@ export default function Dashboard() {
               <CardTitle className="text-sm font-medium">
                 Ingresos Totales
               </CardTitle>
-              <TrendingUp className="h-4 w-4 text-green-600" />
+              <TrendingUp className="h-4 w-4 text-success" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">
+              <div className="text-2xl font-bold text-success">
                 {loading ? "..." : formatCurrency(financialData.totalIncome)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
@@ -719,9 +722,9 @@ export default function Dashboard() {
                     .map((message, index) => (
                       <div
                         key={index}
-                        className="flex items-center gap-2 text-xs p-2 rounded-md bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800"
+                        className="flex items-center gap-2 text-xs p-2 rounded-md bg-warning/10 border border-warning/30"
                       >
-                        <span className="text-amber-600 dark:text-amber-400 font-medium">
+                        <span className="text-warning font-medium">
                           {message.text}
                         </span>
                       </div>
@@ -733,9 +736,9 @@ export default function Dashboard() {
                     .map((message, index) => (
                       <div
                         key={`info-${index}`}
-                        className="flex items-center gap-2 text-xs p-2 rounded-md bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800"
+                        className="flex items-center gap-2 text-xs p-2 rounded-md bg-primary/10 border border-primary/30"
                       >
-                        <span className="text-blue-600 dark:text-blue-400 font-medium">
+                        <span className="text-primary font-medium">
                           ℹ️ {message.text}
                         </span>
                       </div>
@@ -750,10 +753,10 @@ export default function Dashboard() {
               <CardTitle className="text-sm font-medium">
                 Gastos Totales
               </CardTitle>
-              <TrendingDown className="h-4 w-4 text-red-600" />
+              <TrendingDown className="h-4 w-4 text-destructive" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-600">
+              <div className="text-2xl font-bold text-destructive">
                 {loading ? "..." : formatCurrency(financialData.totalExpenses)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
@@ -765,11 +768,11 @@ export default function Dashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Balance</CardTitle>
-              <DollarSign className="h-4 w-4 text-blue-600" />
+              <DollarSign className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
               <div
-                className={`text-2xl font-bold ${financialData.balance >= 0 ? "text-blue-600" : "text-orange-600"}`}
+                className={`text-2xl font-bold ${financialData.balance >= 0 ? "text-primary" : "text-warning"}`}
               >
                 {loading ? "..." : formatCurrency(financialData.balance)}
               </div>
@@ -784,10 +787,10 @@ export default function Dashboard() {
               <CardTitle className="text-sm font-medium">
                 Total Activos
               </CardTitle>
-              <PieChart className="h-4 w-4 text-purple-600" />
+              <PieChart className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-purple-600">
+              <div className="text-2xl font-bold text-primary">
                 {loading ? "..." : formatCurrency(financialData.totalAssets)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
@@ -800,9 +803,9 @@ export default function Dashboard() {
                     .map((message, index) => (
                       <div
                         key={`asset-${index}`}
-                        className="flex items-center gap-2 text-xs p-2 rounded-md bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800"
+                        className="flex items-center gap-2 text-xs p-2 rounded-md bg-warning/10 border border-warning/30"
                       >
-                        <span className="text-amber-600 dark:text-amber-400 font-medium">
+                        <span className="text-warning font-medium">
                           {message.text}
                         </span>
                       </div>
@@ -814,9 +817,9 @@ export default function Dashboard() {
                     .map((message, index) => (
                       <div
                         key={`asset-info-${index}`}
-                        className="flex items-center gap-2 text-xs p-2 rounded-md bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800"
+                        className="flex items-center gap-2 text-xs p-2 rounded-md bg-primary/10 border border-primary/30"
                       >
-                        <span className="text-blue-600 dark:text-blue-400 font-medium">
+                        <span className="text-primary font-medium">
                           ℹ️ {message.text}
                         </span>
                       </div>
@@ -833,14 +836,14 @@ export default function Dashboard() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                  <p className="text-sm font-medium text-muted-foreground">
                     Clientes
                   </p>
-                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
+                  <h3 className="text-2xl font-bold text-foreground mt-1">
                     {financialData.incomeCount}
                   </h3>
                 </div>
-                <Users className="w-8 h-8 text-blue-500" />
+                <Users className="w-8 h-8 text-primary" />
               </div>
             </CardContent>
           </Card>
@@ -849,14 +852,14 @@ export default function Dashboard() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                  <p className="text-sm font-medium text-muted-foreground">
                     Proveedores
                   </p>
-                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
+                  <h3 className="text-2xl font-bold text-foreground mt-1">
                     {financialData.expensesCount}
                   </h3>
                 </div>
-                <Package className="w-8 h-8 text-purple-500" />
+                <Package className="w-8 h-8 text-primary" />
               </div>
             </CardContent>
           </Card>
@@ -865,14 +868,14 @@ export default function Dashboard() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                  <p className="text-sm font-medium text-muted-foreground">
                     Documentos
                   </p>
-                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
+                  <h3 className="text-2xl font-bold text-foreground mt-1">
                     {financialData.incomeCount + financialData.expensesCount}
                   </h3>
                 </div>
-                <FileText className="w-8 h-8 text-orange-500" />
+                <FileText className="w-8 h-8 text-warning" />
               </div>
             </CardContent>
           </Card>
@@ -881,14 +884,14 @@ export default function Dashboard() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                  <p className="text-sm font-medium text-muted-foreground">
                     Este Mes
                   </p>
-                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
+                  <h3 className="text-2xl font-bold text-foreground mt-1">
                     {new Date().toLocaleDateString("es-CO", { month: "short" })}
                   </h3>
                 </div>
-                <Calendar className="w-8 h-8 text-green-500" />
+                <Calendar className="w-8 h-8 text-success" />
               </div>
             </CardContent>
           </Card>
@@ -896,13 +899,13 @@ export default function Dashboard() {
 
         {/* Export Buttons */}
         <div className="flex gap-3 mb-6">
-          <Button onClick={exportPDF} className="bg-red-600 hover:bg-red-700">
+          <Button onClick={exportPDF} variant="destructive">
             <Download className="w-4 h-4 mr-2" />
             Exportar PDF
           </Button>
           <Button
             onClick={exportExcel}
-            className="bg-green-600 hover:bg-green-700"
+            className="bg-success hover:bg-success/90 text-success-foreground"
           >
             <Download className="w-4 h-4 mr-2" />
             Exportar Excel
@@ -933,33 +936,33 @@ export default function Dashboard() {
                   return (
                     <div key={index} className="space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span className="font-medium text-slate-700 dark:text-slate-300">
+                        <span className="font-medium text-foreground">
                           {data.month}
                         </span>
-                        <span className="text-slate-500 dark:text-slate-400">
+                        <span className="text-muted-foreground">
                           {formatCurrency(data.income - data.expenses)}
                         </span>
                       </div>
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2">
+                          <div className="w-full bg-muted rounded-full h-2">
                             <div
-                              className="bg-green-500 h-2 rounded-full transition-all duration-500"
+                              className="bg-success h-2 rounded-full transition-all duration-500"
                               style={{ width: `${incomeWidth}%` }}
                             />
                           </div>
-                          <span className="text-xs text-green-600 font-medium min-w-[80px] text-right">
+                          <span className="text-xs text-success font-medium min-w-[80px] text-right">
                             {formatCurrency(data.income)}
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2">
+                          <div className="w-full bg-muted rounded-full h-2">
                             <div
-                              className="bg-red-500 h-2 rounded-full transition-all duration-500"
+                              className="bg-destructive h-2 rounded-full transition-all duration-500"
                               style={{ width: `${expenseWidth}%` }}
                             />
                           </div>
-                          <span className="text-xs text-red-600 font-medium min-w-[80px] text-right">
+                          <span className="text-xs text-destructive font-medium min-w-[80px] text-right">
                             {formatCurrency(data.expenses)}
                           </span>
                         </div>
@@ -968,16 +971,16 @@ export default function Dashboard() {
                   );
                 })}
               </div>
-              <div className="flex justify-center gap-6 mt-6 pt-6 border-t">
+              <div className="flex justify-center gap-6 mt-6 pt-6 border-t border-border">
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-green-500 rounded-full" />
-                  <span className="text-sm text-slate-600 dark:text-slate-400">
+                  <div className="w-3 h-3 bg-success rounded-full" />
+                  <span className="text-sm text-muted-foreground">
                     Ingresos
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-red-500 rounded-full" />
-                  <span className="text-sm text-slate-600 dark:text-slate-400">
+                  <div className="w-3 h-3 bg-destructive rounded-full" />
+                  <span className="text-sm text-muted-foreground">
                     Gastos
                   </span>
                 </div>
@@ -994,33 +997,33 @@ export default function Dashboard() {
             <CardContent>
               <div className="space-y-4">
                 {loading ? (
-                  <div className="text-center py-8 text-slate-500">
+                  <div className="text-center py-8 text-muted-foreground">
                     Cargando transacciones...
                   </div>
                 ) : recentTransactions.length > 0 ? (
                   recentTransactions.map((transaction, index) => (
                     <div
                       key={index}
-                      className="flex items-center justify-between py-3 border-b last:border-0"
+                      className="flex items-center justify-between py-3 border-b border-border last:border-0"
                     >
                       <div className="flex items-center gap-3">
                         <div
                           className={`p-2 rounded-lg ${transaction.type === "income"
-                              ? "bg-green-100 dark:bg-green-900/30"
-                              : "bg-red-100 dark:bg-red-900/30"
+                              ? "bg-success/10"
+                              : "bg-destructive/10"
                             }`}
                         >
                           {transaction.type === "income" ? (
-                            <ArrowUpRight className="w-4 h-4 text-green-600" />
+                            <ArrowUpRight className="w-4 h-4 text-success" />
                           ) : (
-                            <ArrowDownRight className="w-4 h-4 text-red-600" />
+                            <ArrowDownRight className="w-4 h-4 text-destructive" />
                           )}
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-slate-900 dark:text-white">
+                          <p className="text-sm font-medium text-foreground">
                             {transaction.description}
                           </p>
-                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                          <p className="text-xs text-muted-foreground">
                             {new Date(transaction.date).toLocaleDateString(
                               "es-CO",
                             )}
@@ -1029,8 +1032,8 @@ export default function Dashboard() {
                       </div>
                       <span
                         className={`text-sm font-semibold ${transaction.type === "income"
-                            ? "text-green-600"
-                            : "text-red-600"
+                            ? "text-success"
+                            : "text-destructive"
                           }`}
                       >
                         {transaction.type === "income" ? "+" : "-"}
@@ -1039,7 +1042,7 @@ export default function Dashboard() {
                     </div>
                   ))
                 ) : (
-                  <div className="text-center py-8 text-slate-500">
+                  <div className="text-center py-8 text-muted-foreground">
                     No hay transacciones recientes
                   </div>
                 )}

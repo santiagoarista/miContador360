@@ -869,7 +869,8 @@ export default function Income() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex justify-end mb-6">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-foreground">Ingresos</h1>
         <Button onClick={handleNewIncome} size="sm" className="px-2 sm:px-4">
           <Plus className="w-4 h-4 sm:mr-2" />
           <span className="hidden sm:inline">Nuevo Ingreso</span>
@@ -1068,7 +1069,7 @@ export default function Income() {
                   />
                 </div>
 
-                <div className="flex justify-between items-center pt-4 border-t">
+                <div className="flex justify-between items-center pt-4 border-t border-border">
                   <div>
                     <p className="text-sm text-muted-foreground">
                       Subtotal: {formatCurrency(calculateTotal().subtotal)}
@@ -1114,7 +1115,7 @@ export default function Income() {
               {incomeList.map((income) => (
                 <div
                   key={income.id}
-                  className="flex items-center justify-between p-4 border rounded-lg"
+                  className="flex items-center justify-between p-4 border border-border rounded-lg"
                 >
                   <div className="flex-1">
                     <p className="font-medium">{income.client_name}</p>
@@ -1126,7 +1127,7 @@ export default function Income() {
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-green-600">
+                    <p className="font-bold text-success">
                       {formatCurrency(income.total)}
                     </p>
                     <p className="text-xs text-muted-foreground">
@@ -1139,14 +1140,14 @@ export default function Income() {
                       size="sm"
                       onClick={() => handleEdit(income)}
                     >
-                      <Edit className="w-4 h-4 text-blue-600" />
+                      <Edit className="w-4 h-4 text-primary" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDelete(income.id)}
                     >
-                      <Trash2 className="w-4 h-4 text-red-600" />
+                      <Trash2 className="w-4 h-4 text-destructive" />
                     </Button>
                   </div>
                 </div>

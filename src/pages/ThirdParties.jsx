@@ -140,7 +140,8 @@ export default function ThirdParties() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex justify-end mb-6">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-foreground">Terceros</h1>
         <Button
           onClick={() => {
             setShowForm(!showForm);
@@ -256,7 +257,7 @@ export default function ThirdParties() {
                   </div>
                 </div>
 
-                <div className="flex justify-end space-x-2 pt-4 border-t">
+                <div className="flex justify-end space-x-2 pt-4 border-t border-border">
                   <Button type="button" variant="outline" onClick={() => {
                     setShowForm(false);
                     setEditingId(null);
@@ -280,7 +281,7 @@ export default function ThirdParties() {
           <CardContent>
             <div className="space-y-2">
               {thirdPartiesList.map((party) => (
-                <div key={party.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div key={party.id} className="flex items-center justify-between p-4 border border-border rounded-lg">
                   <div className="flex-1">
                     <p className="font-medium">{party.full_name}</p>
                     <p className="text-sm text-muted-foreground">
@@ -295,10 +296,10 @@ export default function ThirdParties() {
                   </div>
                   <div className="text-right mr-4">
                     <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                      party.classification === 'Cliente' ? 'bg-blue-100 text-blue-800' :
-                      party.classification === 'Proveedor' ? 'bg-green-100 text-green-800' :
-                      party.classification === 'Empleado' ? 'bg-purple-100 text-purple-800' :
-                      'bg-gray-100 text-gray-800'
+                      party.classification === 'Cliente' ? 'bg-primary/10 text-primary' :
+                      party.classification === 'Proveedor' ? 'bg-success/10 text-success' :
+                      party.classification === 'Empleado' ? 'bg-warning/10 text-warning' :
+                      'bg-muted text-muted-foreground'
                     }`}>
                       {party.classification}
                     </span>
@@ -309,14 +310,14 @@ export default function ThirdParties() {
                       size="sm"
                       onClick={() => handleEdit(party)}
                     >
-                      <Edit className="w-4 h-4 text-blue-600" />
+                      <Edit className="w-4 h-4 text-primary" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDelete(party.id)}
                     >
-                      <Trash2 className="w-4 h-4 text-red-600" />
+                      <Trash2 className="w-4 h-4 text-destructive" />
                     </Button>
                   </div>
                 </div>

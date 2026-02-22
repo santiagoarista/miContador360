@@ -129,16 +129,9 @@ function AppSidebar({ onOpenTaxpayerDialog, onSignOut }) {
   );
 }
 
-function usePageTitle() {
-  const location = useLocation();
-  const item = navItems.find((n) => location.pathname === n.path || location.pathname.startsWith(n.path + "/"));
-  return item ? { title: item.label, icon: item.icon } : { title: "MiContador360", icon: LayoutDashboard };
-}
-
 export default function AppLayout() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  const { title: pageTitle } = usePageTitle();
   const [userProfile, setUserProfile] = useState(null);
   const [showTaxpayerTypeDialog, setShowTaxpayerTypeDialog] = useState(false);
   const [taxpayerType, setTaxpayerType] = useState("");
@@ -221,14 +214,6 @@ export default function AppLayout() {
       />
       <SidebarInset>
         <div className="min-h-screen bg-background flex flex-col">
-          <header className="bg-card border-b border-border shadow-sm flex-shrink-0">
-            <div className="flex items-center px-4 sm:px-6 lg:px-8 py-3">
-              <h1 className="text-xl sm:text-2xl font-bold text-foreground truncate">
-                {pageTitle}
-              </h1>
-            </div>
-          </header>
-
           <main className="flex-1 overflow-auto">
             <Outlet />
           </main>

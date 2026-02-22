@@ -225,9 +225,9 @@ export default function Assets() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <main>
-        <Card>
+        <Card className="mb-8">
           <CardHeader>
             <CardTitle>Gestión de Activos</CardTitle>
             <CardDescription>
@@ -236,14 +236,14 @@ export default function Assets() {
           </CardHeader>
           <CardContent>
             {hasKeyChanges && (
-              <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg">
-                <p className="text-amber-800 dark:text-amber-200 font-medium">
+              <div className="mb-6 p-4 bg-warning/10 border border-warning/30 rounded-lg">
+                <p className="text-warning font-medium">
                   ⚠️ Has modificado Efectivo, Bancos o Inventario. Recuerda
                   registrar los cambios.
                 </p>
               </div>
             )}
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="efectivo">Efectivo</Label>
@@ -299,7 +299,7 @@ export default function Assets() {
                     value={assets.inventarios}
                     onChange={handleChange}
                     readOnly
-                    className="bg-slate-100 dark:bg-slate-800"
+                    className="bg-muted"
                   />
                 </div>
 
@@ -412,7 +412,7 @@ export default function Assets() {
                 </div>
               </div>
 
-              <div className="flex justify-end pt-4 border-t gap-3">
+              <div className="flex justify-end pt-4 border-t border-border gap-3">
                 {hasChanges && (
                   <Button
                     type="button"

@@ -510,7 +510,8 @@ export default function Inventory() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex justify-end mb-6">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-foreground">Inventario</h1>
         <Button
           onClick={() => {
             setShowForm(!showForm);
@@ -648,7 +649,7 @@ export default function Inventory() {
                       min="0"
                       value={formData.sale_price.toFixed(2)}
                       readOnly
-                      className="bg-slate-100 dark:bg-slate-800"
+                      className="bg-muted"
                     />
                   </div>
 
@@ -666,7 +667,7 @@ export default function Inventory() {
                   </div>
                 </div>
 
-                <div className="flex justify-end space-x-2 pt-4 border-t">
+                <div className="flex justify-end space-x-2 pt-4 border-t border-border">
                   <Button
                     type="button"
                     variant="outline"
@@ -704,7 +705,7 @@ export default function Inventory() {
               {inventoryList.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between p-4 border rounded-lg"
+                  className="flex items-center justify-between p-4 border border-border rounded-lg"
                 >
                   <div className="flex-1">
                     <p className="font-medium">{item.concept}</p>
@@ -722,10 +723,10 @@ export default function Inventory() {
                     )}
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-purple-600">
+                    <p className="font-bold text-primary">
                       {formatCurrency(item.stock * item.purchase_value)}
                     </p>
-                    <p className="text-xs text-green-600">
+                    <p className="text-xs text-success">
                       +{item.profit_margin}%
                     </p>
                   </div>
@@ -735,14 +736,14 @@ export default function Inventory() {
                       size="sm"
                       onClick={() => handleEdit(item)}
                     >
-                      <Edit className="w-4 h-4 text-blue-600" />
+                      <Edit className="w-4 h-4 text-primary" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDelete(item.id)}
                     >
-                      <Trash2 className="w-4 h-4 text-red-600" />
+                      <Trash2 className="w-4 h-4 text-destructive" />
                     </Button>
                   </div>
                 </div>

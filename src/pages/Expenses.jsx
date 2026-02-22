@@ -608,7 +608,8 @@ export default function Expenses() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex justify-end mb-6">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-foreground">Gastos</h1>
         <Button onClick={() => setShowForm(!showForm)} size="sm" className="px-2 sm:px-4">
           <Plus className="w-4 h-4 sm:mr-2" />
           <span className="hidden sm:inline">Nuevo Gasto</span>
@@ -777,7 +778,7 @@ export default function Expenses() {
               {expensesList.map((expense) => (
                 <div
                   key={expense.id}
-                  className="flex items-center justify-between p-4 border rounded-lg"
+                  className="flex items-center justify-between p-4 border border-border rounded-lg"
                 >
                   <div className="flex-1">
                     <p className="font-medium">{expense.payee_name}</p>
@@ -789,7 +790,7 @@ export default function Expenses() {
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-red-600">
+                    <p className="font-bold text-destructive">
                       {formatCurrency(expense.total)}
                     </p>
                     <p className="text-xs text-muted-foreground">
@@ -802,14 +803,14 @@ export default function Expenses() {
                       size="sm"
                       onClick={() => handleEdit(expense)}
                     >
-                      <Edit className="w-4 h-4 text-blue-600" />
+                      <Edit className="w-4 h-4 text-primary" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDelete(expense.id)}
                     >
-                      <Trash2 className="w-4 h-4 text-red-600" />
+                      <Trash2 className="w-4 h-4 text-destructive" />
                     </Button>
                   </div>
                 </div>
