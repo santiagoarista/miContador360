@@ -695,7 +695,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" id="dashboard-content">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6" id="dashboard-content">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-xl sm:text-2xl font-bold text-foreground">Inicio</h1>
         </div>
@@ -905,7 +905,8 @@ export default function Dashboard() {
           </Button>
           <Button
             onClick={exportExcel}
-            className="bg-success hover:bg-success/90 text-success-foreground"
+            variant="outline"
+            className="border-success bg-success text-success-foreground hover:bg-success/90 hover:text-success-foreground"
           >
             <Download className="w-4 h-4 mr-2" />
             Exportar Excel

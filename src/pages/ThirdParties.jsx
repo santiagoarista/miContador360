@@ -4,14 +4,34 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '../components/ui/table';
 import { Plus, Trash2, Edit } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+} from '../components/ui/pagination';
+
+const PAGE_SIZE = 10;
 
 export default function ThirdParties() {
   const [loading, setLoading] = useState(false);
   const [thirdPartiesList, setThirdPartiesList] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const [formData, setFormData] = useState({
     full_name: '',
@@ -26,6 +46,11 @@ export default function ThirdParties() {
   useEffect(() => {
     fetchThirdPartiesData();
   }, []);
+
+  useEffect(() => {
+    const totalP = Math.max(1, Math.ceil(thirdPartiesList.length / PAGE_SIZE));
+    if (currentPage > totalP) setCurrentPage(1);
+  }, [thirdPartiesList.length]);
 
   const fetchThirdPartiesData = async () => {
     console.log('[ThirdParties] Fetching third parties data...');
@@ -138,8 +163,20 @@ export default function ThirdParties() {
     }
   };
 
+  const totalItems = thirdPartiesList.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+  const safePage = Math.min(currentPage, totalPages);
+  const startIndex = (safePage - 1) * PAGE_SIZE;
+  const endIndex = Math.min(startIndex + PAGE_SIZE, totalItems);
+  const paginatedList = thirdPartiesList.slice(startIndex, endIndex);
+
+  const goToPage = (page) => {
+    const p = Math.max(1, Math.min(page, totalPages));
+    setCurrentPage(p);
+  };
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-xl sm:text-2xl font-bold text-foreground">Terceros</h1>
         <Button
@@ -276,53 +313,132 @@ export default function ThirdParties() {
         <Card>
           <CardHeader>
             <CardTitle>Lista de Terceros</CardTitle>
-            <CardDescription>Total registros: {thirdPartiesList.length}</CardDescription>
+            <CardDescription>
+              {totalItems === 0
+                ? 'Total registros: 0'
+                : `Mostrando ${startIndex + 1}-${endIndex} de ${totalItems} registros`}
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              {thirdPartiesList.map((party) => (
-                <div key={party.id} className="flex items-center justify-between p-4 border border-border rounded-lg">
-                  <div className="flex-1">
-                    <p className="font-medium">{party.full_name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {party.identification_type}: {party.identification_number}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {party.email && `Email: ${party.email}`} {party.phone && `| Tel: ${party.phone}`}
-                    </p>
-                    {party.address && (
-                      <p className="text-xs text-muted-foreground">Dirección: {party.address}</p>
-                    )}
-                  </div>
-                  <div className="text-right mr-4">
-                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                      party.classification === 'Cliente' ? 'bg-primary/10 text-primary' :
-                      party.classification === 'Proveedor' ? 'bg-success/10 text-success' :
-                      party.classification === 'Empleado' ? 'bg-warning/10 text-warning' :
-                      'bg-muted text-muted-foreground'
-                    }`}>
-                      {party.classification}
-                    </span>
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEdit(party)}
-                    >
-                      <Edit className="w-4 h-4 text-primary" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDelete(party.id)}
-                    >
-                      <Trash2 className="w-4 h-4 text-destructive" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nombre</TableHead>
+                  <TableHead>Tipo ID</TableHead>
+                  <TableHead>Nº Identificación</TableHead>
+                  <TableHead className="hidden md:table-cell">Email</TableHead>
+                  <TableHead className="hidden lg:table-cell">Teléfono</TableHead>
+                  <TableHead className="hidden xl:table-cell">Dirección</TableHead>
+                  <TableHead>Clasificación</TableHead>
+                  <TableHead className="w-[90px] text-right">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedList.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
+                      No hay terceros registrados. Agrega uno con el botón &quot;Nuevo Tercero&quot;.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  paginatedList.map((party) => (
+                    <TableRow key={party.id}>
+                      <TableCell className="font-medium">{party.full_name}</TableCell>
+                      <TableCell className="text-muted-foreground">{party.identification_type}</TableCell>
+                      <TableCell>{party.identification_number}</TableCell>
+                      <TableCell className="hidden md:table-cell text-muted-foreground">{party.email || '—'}</TableCell>
+                      <TableCell className="hidden lg:table-cell text-muted-foreground">{party.phone || '—'}</TableCell>
+                      <TableCell className="hidden xl:table-cell text-muted-foreground max-w-[200px] truncate" title={party.address}>
+                        {party.address || '—'}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={party.classification === 'Cliente' ? 'default' : 'secondary'}
+                          className={
+                            party.classification === 'Proveedor' ? 'bg-success/10 text-success border-border' :
+                            party.classification === 'Empleado' ? 'bg-warning/10 text-warning border-border' :
+                            party.classification === 'Otro' ? 'bg-muted text-muted-foreground border-border' : ''
+                          }
+                        >
+                          {party.classification}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleEdit(party)}
+                            aria-label="Editar"
+                          >
+                            <Edit className="w-4 h-4 text-primary" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleDelete(party.id)}
+                            aria-label="Eliminar"
+                          >
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+            {totalItems > PAGE_SIZE && (
+              <Pagination className="mt-4">
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        goToPage(safePage - 1);
+                      }}
+                      className={
+                        safePage <= 1
+                          ? 'pointer-events-none opacity-50'
+                          : 'cursor-pointer'
+                      }
+                    />
+                  </PaginationItem>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <PaginationItem key={page}>
+                      <PaginationLink
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          goToPage(page);
+                        }}
+                        isActive={page === safePage}
+                        className="cursor-pointer"
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+                  <PaginationItem>
+                    <PaginationNext
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        goToPage(safePage + 1);
+                      }}
+                      className={
+                        safePage >= totalPages
+                          ? 'pointer-events-none opacity-50'
+                          : 'cursor-pointer'
+                      }
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            )}
           </CardContent>
         </Card>
       </main>
