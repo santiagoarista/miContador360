@@ -23,7 +23,8 @@ import {
   LogOut,
   TrendingUp,
   TrendingDown,
-  PieChart,
+  Wallet,
+  Scale,
   Users,
   Package,
   Settings,
@@ -49,8 +50,8 @@ const navItems = [
   { path: "/dashboard", label: "Inicio", icon: LayoutDashboard },
   { path: "/income", label: "Ingresos", icon: TrendingUp },
   { path: "/expenses", label: "Gastos", icon: TrendingDown },
-  { path: "/assets", label: "Activos", icon: PieChart },
-  { path: "/liabilities", label: "Pasivos", icon: PieChart },
+  { path: "/assets", label: "Activos", icon: Wallet },
+  { path: "/liabilities", label: "Pasivos", icon: Scale },
   { path: "/inventory", label: "Inventario", icon: Package },
   { path: "/third-parties", label: "Terceros", icon: Users },
 ];
@@ -66,13 +67,19 @@ function AppSidebar({ onOpenTaxpayerDialog, onSignOut }) {
   };
 
   return (
-    <Sidebar>
+    <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border">
-        <div className="flex items-center gap-2 px-2 py-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-semibold">
-            M
+        <div className="flex flex-row items-center justify-between gap-2 px-2 py-2 group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-1 group-data-[collapsible=icon]:px-1">
+          <div className="flex flex-row items-center gap-2 group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:gap-1">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground font-semibold">
+              M
+            </div>
+            <div className="flex min-w-0 flex-col gap-0 overflow-hidden group-data-[collapsible=icon]:hidden">
+              <span className="font-semibold text-sidebar-foreground truncate">MiContador360</span>
+              <span className="text-xs text-sidebar-foreground/70 truncate">by lopezempresarial</span>
+            </div>
           </div>
-          <span className="font-semibold text-sidebar-foreground">MiContador360</span>
+          <SidebarTrigger className="flex shrink-0" />
         </div>
       </SidebarHeader>
       <SidebarContent>
@@ -85,6 +92,7 @@ function AppSidebar({ onOpenTaxpayerDialog, onSignOut }) {
                   <SidebarMenuButton
                     onClick={() => handleNav(item.path)}
                     data-active={location.pathname === item.path}
+                    tooltip={item.label}
                     asChild={false}
                   >
                     <item.icon className="h-4 w-4 shrink-0" />
@@ -99,13 +107,13 @@ function AppSidebar({ onOpenTaxpayerDialog, onSignOut }) {
       <SidebarFooter className="border-t border-sidebar-border">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={onOpenTaxpayerDialog} asChild={false}>
+            <SidebarMenuButton onClick={onOpenTaxpayerDialog} tooltip="Tipo Contribuyente" asChild={false}>
               <Settings className="h-4 w-4 shrink-0" />
               <span>Tipo Contribuyente</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={onSignOut} asChild={false}>
+            <SidebarMenuButton onClick={onSignOut} tooltip="Cerrar Sesión" asChild={false}>
               <LogOut className="h-4 w-4 shrink-0" />
               <span>Cerrar Sesión</span>
             </SidebarMenuButton>
@@ -116,9 +124,16 @@ function AppSidebar({ onOpenTaxpayerDialog, onSignOut }) {
   );
 }
 
+function usePageTitle() {
+  const location = useLocation();
+  const item = navItems.find((n) => location.pathname === n.path || location.pathname.startsWith(n.path + "/"));
+  return item ? { title: item.label, icon: item.icon } : { title: "MiContador360", icon: LayoutDashboard };
+}
+
 export default function AppLayout() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const { title: pageTitle } = usePageTitle();
   const [userProfile, setUserProfile] = useState(null);
   const [showTaxpayerTypeDialog, setShowTaxpayerTypeDialog] = useState(false);
   const [taxpayerType, setTaxpayerType] = useState("");
@@ -202,53 +217,16 @@ export default function AppLayout() {
       <SidebarInset>
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex flex-col">
           <header className="bg-white dark:bg-slate-800 shadow-sm border-b flex-shrink-0">
-            <div className="flex items-center gap-2 px-4 sm:px-6 lg:px-8 py-3">
-              <SidebarTrigger className="flex" />
-              <div className="flex-1 min-w-0 flex justify-between items-center gap-2">
-                <div className="flex-1 min-w-0">
-                  <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white truncate">
-                    MiContador360
-                  </h1>
-                  <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 truncate">
-                    {user?.email}
-                    {userProfile?.taxpayer_type && (
-                      <span className="ml-2 text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900 rounded hidden sm:inline">
-                        {userProfile.taxpayer_type}
-                      </span>
-                    )}
-                  </p>
-                </div>
-                <div className="flex gap-1 sm:gap-2 flex-shrink-0">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowTaxpayerTypeDialog(true)}
-                    className="px-2 sm:px-4"
-                  >
-                    <Settings className="w-4 h-4 sm:mr-2" />
-                    <span className="hidden sm:inline">Tipo Contribuyente</span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleSignOut}
-                    className="px-2 sm:px-4"
-                  >
-                    <LogOut className="w-4 h-4 sm:mr-2" />
-                    <span className="hidden sm:inline">Cerrar Sesión</span>
-                  </Button>
-                </div>
-              </div>
+            <div className="flex items-center px-4 sm:px-6 lg:px-8 py-3">
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white truncate">
+                {pageTitle}
+              </h1>
             </div>
           </header>
 
           <main className="flex-1 overflow-auto">
             <Outlet />
           </main>
-
-          <footer className="text-center py-3 text-xs text-slate-500 dark:text-slate-400 flex-shrink-0">
-            By lopezempresarial
-          </footer>
         </div>
       </SidebarInset>
 

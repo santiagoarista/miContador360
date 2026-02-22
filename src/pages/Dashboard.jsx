@@ -20,7 +20,6 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Download,
-  Settings,
 } from "lucide-react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -828,60 +827,72 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* Tipo de Contribuyente Banner */}
-        <Card
-          className={`mb-6 ${userProfile?.taxpayer_type
-              ? "bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 border-blue-200 dark:border-blue-800"
-              : "bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950 dark:to-orange-950 border-amber-200 dark:border-amber-800"
-            }`}
-        >
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div
-                  className={`p-2 rounded-lg ${userProfile?.taxpayer_type
-                      ? "bg-blue-100 dark:bg-blue-900"
-                      : "bg-amber-100 dark:bg-amber-900"
-                    }`}
-                >
-                  <Users
-                    className={`w-5 h-5 ${userProfile?.taxpayer_type
-                        ? "text-blue-600 dark:text-blue-400"
-                        : "text-amber-600 dark:text-amber-400"
-                      }`}
-                  />
-                </div>
+        {/* Quick Stats Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">
-                    Tipo de Contribuyente
+                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                    Clientes
                   </p>
-                  {userProfile?.taxpayer_type ? (
-                    <p className="text-lg font-semibold text-blue-900 dark:text-blue-100">
-                      {userProfile.taxpayer_type}
-                    </p>
-                  ) : (
-                    <p className="text-lg font-semibold text-amber-900 dark:text-amber-100">
-                      No configurado
-                    </p>
-                  )}
+                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
+                    {financialData.incomeCount}
+                  </h3>
                 </div>
+                <Users className="w-8 h-8 text-blue-500" />
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => window.dispatchEvent(new CustomEvent("open-taxpayer-dialog"))}
-                className={
-                  userProfile?.taxpayer_type
-                    ? "border-blue-300 dark:border-blue-700"
-                    : "border-amber-300 dark:border-amber-700"
-                }
-              >
-                <Settings className="w-4 h-4 mr-2" />
-                {userProfile?.taxpayer_type ? "Cambiar" : "Configurar"}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                    Proveedores
+                  </p>
+                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
+                    {financialData.expensesCount}
+                  </h3>
+                </div>
+                <Package className="w-8 h-8 text-purple-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                    Documentos
+                  </p>
+                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
+                    {financialData.incomeCount + financialData.expensesCount}
+                  </h3>
+                </div>
+                <FileText className="w-8 h-8 text-orange-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                    Este Mes
+                  </p>
+                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
+                    {new Date().toLocaleDateString("es-CO", { month: "short" })}
+                  </h3>
+                </div>
+                <Calendar className="w-8 h-8 text-green-500" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Export Buttons */}
         <div className="flex gap-3 mb-6">
@@ -1032,73 +1043,6 @@ export default function Dashboard() {
                     No hay transacciones recientes
                   </div>
                 )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Quick Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
-                    Clientes
-                  </p>
-                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
-                    {financialData.incomeCount}
-                  </h3>
-                </div>
-                <Users className="w-8 h-8 text-blue-500" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
-                    Proveedores
-                  </p>
-                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
-                    {financialData.expensesCount}
-                  </h3>
-                </div>
-                <Package className="w-8 h-8 text-purple-500" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
-                    Documentos
-                  </p>
-                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
-                    {financialData.incomeCount + financialData.expensesCount}
-                  </h3>
-                </div>
-                <FileText className="w-8 h-8 text-orange-500" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
-                    Este Mes
-                  </p>
-                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
-                    {new Date().toLocaleDateString("es-CO", { month: "short" })}
-                  </h3>
-                </div>
-                <Calendar className="w-8 h-8 text-green-500" />
               </div>
             </CardContent>
           </Card>
