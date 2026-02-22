@@ -45,6 +45,7 @@ import {
   SelectValue,
 } from "../components/ui/select";
 import { Label } from "../components/ui/label";
+import { ModeToggle } from "../components/ModeToggle";
 
 const navItems = [
   { path: "/dashboard", label: "Inicio", icon: LayoutDashboard },
@@ -105,6 +106,10 @@ function AppSidebar({ onOpenTaxpayerDialog, onSignOut }) {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="border-t border-sidebar-border">
+        <div className="flex items-center gap-2 px-2 py-2 group-data-[collapsible=icon]:justify-center">
+          <ModeToggle />
+          <span className="text-sm text-sidebar-foreground group-data-[collapsible=icon]:hidden">Tema</span>
+        </div>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton onClick={onOpenTaxpayerDialog} tooltip="Tipo Contribuyente" asChild={false}>
@@ -215,10 +220,10 @@ export default function AppLayout() {
         onSignOut={handleSignOut}
       />
       <SidebarInset>
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex flex-col">
-          <header className="bg-white dark:bg-slate-800 shadow-sm border-b flex-shrink-0">
+        <div className="min-h-screen bg-background flex flex-col">
+          <header className="bg-card border-b border-border shadow-sm flex-shrink-0">
             <div className="flex items-center px-4 sm:px-6 lg:px-8 py-3">
-              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white truncate">
+              <h1 className="text-xl sm:text-2xl font-bold text-foreground truncate">
                 {pageTitle}
               </h1>
             </div>

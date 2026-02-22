@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -11,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "../components/ui/card";
-import { ArrowLeft, Plus, Trash2, Edit } from "lucide-react";
+import { Plus, Trash2, Edit } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -21,7 +20,6 @@ import {
 } from "../components/ui/select";
 
 export default function Expenses() {
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [expensesList, setExpensesList] = useState([]);
   const [showForm, setShowForm] = useState(false);
@@ -609,33 +607,14 @@ export default function Expenses() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      <header className="bg-white dark:bg-slate-800 shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center space-x-2 sm:space-x-4 flex-1 min-w-0">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate("/dashboard")}
-              >
-                <ArrowLeft className="w-4 h-4" />
-              </Button>
-              <h1 className="text-xl sm:text-2xl font-bold truncate">Gastos</h1>
-            </div>
-            <Button
-              onClick={() => setShowForm(!showForm)}
-              size="sm"
-              className="flex-shrink-0 px-2 sm:px-4"
-            >
-              <Plus className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline">Nuevo Gasto</span>
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="flex justify-end mb-6">
+        <Button onClick={() => setShowForm(!showForm)} size="sm" className="px-2 sm:px-4">
+          <Plus className="w-4 h-4 sm:mr-2" />
+          <span className="hidden sm:inline">Nuevo Gasto</span>
+        </Button>
+      </div>
+      <main>
         {showForm && (
           <Card className="mb-8">
             <CardHeader>

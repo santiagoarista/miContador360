@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -11,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "../components/ui/card";
-import { ArrowLeft, Save, CreditCard } from "lucide-react";
+import { Save, CreditCard } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -29,7 +28,6 @@ import {
 } from "../components/ui/select";
 
 export default function Liabilities() {
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [liabilities, setLiabilities] = useState({
     proveedores: 0,
@@ -259,21 +257,8 @@ export default function Liabilities() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      <header className="bg-white dark:bg-slate-800 shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center space-x-2 sm:space-x-4 flex-1 min-w-0">
-              <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")}>
-                <ArrowLeft className="w-4 h-4" />
-              </Button>
-              <h1 className="text-xl sm:text-2xl font-bold truncate">Pasivos y Patrimonio</h1>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+      <main>
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>
