@@ -11,6 +11,8 @@ import Assets from './pages/Assets';
 import Liabilities from './pages/Liabilities';
 import ThirdParties from './pages/ThirdParties';
 import Inventory from './pages/Inventory';
+import SubscriptionPayment from './pages/SubscriptionPayment';
+import PaymentResponse from './pages/PaymentResponse';
 
 function AppRoutes() {
   const { user, loading } = useAuth();
@@ -31,6 +33,14 @@ function AppRoutes() {
       <Route
         path="/login"
         element={user ? <Navigate to="/dashboard" replace /> : <Login />}
+      />
+      <Route
+        path="/subscription-payment"
+        element={user ? <SubscriptionPayment /> : <Navigate to="/login" replace />}
+      />
+      <Route
+        path="/payment/response"
+        element={<PaymentResponse />}
       />
       <Route
         path="/"

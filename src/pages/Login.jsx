@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabase';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -47,7 +48,19 @@ export default function Login() {
         setError(signInError.message);
       } else if (data.user) {
         console.log('[Login] User signed in successfully:', data.user.id);
-        navigate('/dashboard');
+
+        // Check if user has an active subscription
+        const { data: sub } = await supabase
+          .from('subscriptions')
+          .select('status')
+          .eq('user_id', data.user.id)
+          .single();
+
+        if (sub?.status === 'active') {
+          navigate('/dashboard');
+        } else {
+          navigate('/subscription-payment');
+        }
       }
     } catch (err) {
       console.error('[Login] Unexpected error:', err);
@@ -81,13 +94,8 @@ export default function Login() {
         }
       } else if (data && data.user) {
         console.log('[Login] Sign up successful! User ID:', data.user.id);
-        setMessage(`Por favor revisa tu bandeja de entrada. Hemos enviado un email de confirmación a ${formData.email}. Por favor verifica tu cuenta antes de iniciar sesión.`);
-        
-        // Redirect to login after a brief delay
-        setTimeout(() => {
-          setIsLogin(true);
-          setMessage('');
-        }, 3000);
+        // Redirect to subscription payment page
+        navigate('/subscription-payment');
       }
     } catch (err) {
       console.error('[Login] Unexpected error:', err);
