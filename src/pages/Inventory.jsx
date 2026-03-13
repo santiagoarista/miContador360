@@ -415,16 +415,24 @@ export default function Inventory() {
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuario no autenticado");
 
-      // Calcular total basado en stock actual * precio de compra
-      const total = formData.stock * formData.purchase_value;
+      // Calcular total basado en cantidad comprada * precio de compra
+      const total = formData.quantity * formData.purchase_value;
 
       const { supplier_name, ...restFormData } = formData;
-      const inventoryData = {
+      
+      // Para nuevos items, sincronizar stock con cantidad comprada
+      // Para ediciones, respetar el stock actual del usuario
+      let inventoryData = {
         user_id: user.id,
         ...restFormData,
         supplier: supplier_name || "",
         total,
       };
+      
+      // Si es un nuevo item, el stock debe ser igual a la cantidad comprada
+      if (!editingId) {
+        inventoryData.stock = formData.quantity;
+      }
 
       let error;
       let oldItem = null;
