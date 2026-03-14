@@ -36,9 +36,13 @@ export const PAYU_CONFIG = {
 /**
  * Generate MD5 signature for PayU payment
  * Format: ApiKey~merchantId~referenceCode~amount~currency
+ * Amount must be string with format: XXXXX.00
  */
 export const generateSignature = (referenceCode, amount, currency = PAYU_CONFIG.CURRENCY) => {
-  const signatureString = `${PAYU_CONFIG.API_KEY}~${PAYU_CONFIG.MERCHANT_ID}~${referenceCode}~${amount}~${currency}`;
+  // Convert amount to string with 2 decimals
+  const amountStr = typeof amount === 'number' ? amount.toFixed(1) : String(amount);
+  const signatureString = `${PAYU_CONFIG.API_KEY}~${PAYU_CONFIG.MERCHANT_ID}~${referenceCode}~${amountStr}~${currency}`;
+  console.log('[PayU] Signature string:', signatureString);
   return md5(signatureString);
 };
 
@@ -55,14 +59,22 @@ export const generateReferenceCode = (userId) => {
  */
 export const createPaymentFormData = (user, referenceCode) => {
   const amount = PAYU_CONFIG.SUBSCRIPTION_AMOUNT;
+  const amountStr = String(amount).includes('.') ? amount : `${amount}.0`;
   const signature = generateSignature(referenceCode, amount);
+  
+  console.log('[PayU] Payment form data:', {
+    merchantId: PAYU_CONFIG.MERCHANT_ID,
+    amount: amountStr,
+    referenceCode: referenceCode,
+    signature: signature,
+  });
   
   return {
     merchantId: PAYU_CONFIG.MERCHANT_ID,
     accountId: PAYU_CONFIG.ACCOUNT_ID,
     description: 'Suscripción Mensual - Sistema Contable',
     referenceCode: referenceCode,
-    amount: amount,
+    amount: amountStr,
     tax: 0,
     taxReturnBase: 0,
     currency: PAYU_CONFIG.CURRENCY,
@@ -72,7 +84,7 @@ export const createPaymentFormData = (user, referenceCode) => {
     responseUrl: PAYU_CONFIG.RESPONSE_URL,
     confirmationUrl: PAYU_CONFIG.CONFIRMATION_URL,
     paymentMethods: 'MASTERCARD,VISA,AMEX,PSE,BALOTO,EFECTY,BANK_REFERENCED,OTHERS_CASH',
-    extra1: user.id, // Store user ID for reference
+    extra1: user.id,
     extra2: 'monthly_subscription',
   };
 };
