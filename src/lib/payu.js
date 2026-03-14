@@ -11,9 +11,9 @@ const md5 = (string) => {
 
 // PayU Configuration
 export const PAYU_CONFIG = {
-  MERCHANT_ID: import.meta.env.VITE_PAYU_MERCHANT_ID || '508029',
-  API_KEY: import.meta.env.VITE_PAYU_API_KEY || '4Vj8eK4rloUd272L48hsrarnUA',
-  ACCOUNT_ID: import.meta.env.VITE_PAYU_ACCOUNT_ID || '512321', // Colombia account
+  MERCHANT_ID: import.meta.env.VITE_PAYU_MERCHANT_ID || '1020873',
+  API_KEY: import.meta.env.VITE_PAYU_API_KEY || '3L7LJ956SmM3Lz1f6lZMWtzsx9',
+  ACCOUNT_ID: import.meta.env.VITE_PAYU_ACCOUNT_ID || '1029937', // Colombia account
   
   // WebCheckout URL
   PAYMENT_URL: 'https://sandbox.checkout.payulatam.com/ppp-web-gateway-payu/',
