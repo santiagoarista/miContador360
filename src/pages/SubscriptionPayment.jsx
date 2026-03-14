@@ -7,7 +7,7 @@ import { Button } from '../components/ui/button';
 import { Alert, AlertDescription } from '../components/ui/alert';
 import { Spinner } from '../components/ui/spinner';
 import { CheckCircle, CreditCard, Shield } from 'lucide-react';
-import { PAYU_CONFIG } from '../lib/payu';
+import { PAYU_CONFIG, generateReferenceCode, createPaymentFormData } from '../lib/payu';
 
 export default function SubscriptionPayment() {
   const navigate = useNavigate();
@@ -57,26 +57,46 @@ export default function SubscriptionPayment() {
     setError('');
 
     try {
-      // TODO: Replace with real PayU flow once credentials are available
-      const now = new Date();
-      const endDate = new Date();
-      endDate.setMonth(endDate.getMonth() + 1);
+      // Create a reference code for this transaction
+      const referenceCode = generateReferenceCode(user.id);
 
+      // Create the payment form data
+      const paymentFormData = createPaymentFormData(user, referenceCode);
+
+      // Create a pending subscription record
       const { error: dbError } = await supabase
         .from('subscriptions')
         .upsert({
           user_id: user.id,
-          status: 'active',
+          status: 'pending',
           amount: PAYU_CONFIG.SUBSCRIPTION_AMOUNT,
           currency: PAYU_CONFIG.CURRENCY,
-          payu_reference_code: `DEV_${user.id.substring(0, 8)}_${Date.now()}`,
-          subscription_start_date: now.toISOString(),
-          subscription_end_date: endDate.toISOString(),
+          payu_reference_code: referenceCode,
         }, { onConflict: 'user_id' });
 
-      if (dbError) throw new Error('Error al activar suscripción: ' + dbError.message);
+      if (dbError) {
+        console.error('Error creating subscription record:', dbError);
+        throw new Error('Error al crear el registro de suscripción');
+      }
 
-      navigate('/dashboard');
+      // Create a hidden form and submit it to PayU
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = PAYU_CONFIG.PAYMENT_URL;
+      form.style.display = 'none';
+
+      // Add all the payment form fields
+      Object.keys(paymentFormData).forEach(key => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = paymentFormData[key];
+        form.appendChild(input);
+      });
+
+      document.body.appendChild(form);
+      form.submit();
+      
     } catch (err) {
       console.error('Payment initialization error:', err);
       setError(err.message || 'Error al iniciar el pago');

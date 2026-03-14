@@ -11,6 +11,7 @@ import Assets from './pages/Assets';
 import Liabilities from './pages/Liabilities';
 import ThirdParties from './pages/ThirdParties';
 import Inventory from './pages/Inventory';
+import Profile from './pages/Profile';
 import SubscriptionPayment from './pages/SubscriptionPayment';
 import PaymentResponse from './pages/PaymentResponse';
 
@@ -54,6 +55,7 @@ function AppRoutes() {
         <Route path="liabilities" element={<Liabilities />} />
         <Route path="third-parties" element={<ThirdParties />} />
         <Route path="inventory" element={<Inventory />} />
+        <Route path="profile" element={<Profile />} />
       </Route>
     </Routes>
   );

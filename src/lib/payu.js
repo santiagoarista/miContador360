@@ -179,9 +179,9 @@ export const PAYU_CONFIG = {
   CURRENCY: 'COP',
   LANGUAGE: 'es',
   
-  // Subscription amount (10 USD in COP - approximately 40,000 COP)
-  SUBSCRIPTION_AMOUNT: 40000, // Update this based on current exchange rate
-  SUBSCRIPTION_AMOUNT_USD: 10,
+  // Subscription amount (15,000 COP per month)
+  SUBSCRIPTION_AMOUNT: 15000,
+  SUBSCRIPTION_AMOUNT_USD: 3.75,
 };
 
 /**

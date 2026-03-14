@@ -29,6 +29,7 @@ import {
   Package,
   Settings,
   LayoutDashboard,
+  UserCircle,
 } from "lucide-react";
 import {
   Dialog,
@@ -115,6 +116,12 @@ function AppSidebar({ onOpenTaxpayerDialog, onSignOut }) {
             <SidebarMenuButton onClick={onOpenTaxpayerDialog} tooltip="Tipo Contribuyente" asChild={false}>
               <Settings className="h-4 w-4 shrink-0" />
               <span>Tipo Contribuyente</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton onClick={() => window.location.href = '/profile'} tooltip="Mi Perfil" asChild={false}>
+              <UserCircle className="h-4 w-4 shrink-0" />
+              <span>Mi Perfil</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
