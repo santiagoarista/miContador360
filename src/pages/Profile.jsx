@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import {
@@ -22,7 +23,8 @@ import { Alert, AlertDescription } from '../components/ui/alert';
 import { Mail, Calendar, CheckCircle, AlertCircle, Clock, User } from 'lucide-react';
 
 export default function Profile() {
-  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
   const [subscription, setSubscription] = useState(null);
   const [loading, setLoading] = useState(true);
   const [canceling, setCanceling] = useState(false);
@@ -33,6 +35,17 @@ export default function Profile() {
   useEffect(() => {
     fetchSubscription();
   }, [user]);
+
+  // Redirigir a login después de 2 segundos si hay success
+  useEffect(() => {
+    if (success) {
+      const redirectTimer = setTimeout(async () => {
+        await signOut();
+        navigate('/login');
+      }, 2000);
+      return () => clearTimeout(redirectTimer);
+    }
+  }, [success, navigate, signOut]);
 
   const fetchSubscription = async () => {
     if (!user) return;
@@ -180,7 +193,12 @@ export default function Profile() {
           {success && (
             <Alert className="border-success/30 bg-success/10">
               <CheckCircle className="h-4 w-4 text-success" />
-              <AlertDescription className="text-success">{success}</AlertDescription>
+              <div className="flex-1">
+                <AlertDescription className="text-success font-medium">{success}</AlertDescription>
+                <AlertDescription className="text-success text-xs mt-1">
+                  Serás redirigido al inicio de sesión en 2 segundos...
+                </AlertDescription>
+              </div>
             </Alert>
           )}
 
