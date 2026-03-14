@@ -42,19 +42,27 @@ export const generateReferenceCode = (userId) => {
 /**
  * Generate MD5 signature for PayU payment
  * Format: ApiKey~merchantId~referenceCode~amount~currency
+ * According to PayU docs: https://developers.payulatam.com/latam/es/docs/integrations/webcheckout-integration/payment-form.html
  */
 export const generateSignature = (referenceCode, amount) => {
-  const signatureString = `${PAYU_CONFIG.API_KEY}~${PAYU_CONFIG.MERCHANT_ID}~${referenceCode}~${amount}~${PAYU_CONFIG.CURRENCY}`;
-  console.log('[PayU] Generating signature for:', {
-    apiKey: PAYU_CONFIG.API_KEY.substring(0, 10) + '...',
-    merchantId: PAYU_CONFIG.MERCHANT_ID,
-    referenceCode,
-    amount,
-    currency: PAYU_CONFIG.CURRENCY,
-  });
-  console.log('[PayU] Signature string:', signatureString);
+  // Ensure amount is a string with explicit decimals
+  const amountStr = String(amount);
+  
+  const signatureString = `${PAYU_CONFIG.API_KEY}~${PAYU_CONFIG.MERCHANT_ID}~${referenceCode}~${amountStr}~${PAYU_CONFIG.CURRENCY}`;
+  
+  console.log('[PayU] === SIGNATURE CALCULATION ===');
+  console.log('[PayU] API Key:', PAYU_CONFIG.API_KEY);
+  console.log('[PayU] Merchant ID:', PAYU_CONFIG.MERCHANT_ID);
+  console.log('[PayU] Reference Code:', referenceCode);
+  console.log('[PayU] Amount:', amountStr);
+  console.log('[PayU] Currency:', PAYU_CONFIG.CURRENCY);
+  console.log('[PayU] Raw string to hash:', signatureString);
+  
   const signature = md5(signatureString);
-  console.log('[PayU] Generated signature:', signature);
+  
+  console.log('[PayU] MD5 Hash result:', signature);
+  console.log('[PayU] === END SIGNATURE CALCULATION ===');
+  
   return signature;
 };
 
@@ -62,7 +70,8 @@ export const generateSignature = (referenceCode, amount) => {
  * Create PayU payment form data for WebCheckout
  */
 export const createPaymentFormData = (user, referenceCode) => {
-  const amount = PAYU_CONFIG.SUBSCRIPTION_AMOUNT;
+  // Amount MUST be a string with two decimal places for PayU signature
+  const amount = String(PAYU_CONFIG.SUBSCRIPTION_AMOUNT) + '.00';
   const signature = generateSignature(referenceCode, amount);
   
   console.log('[PayU] Payment form data to submit:', {
@@ -103,17 +112,28 @@ export const submitPaymentForm = (formData) => {
   form.action = PAYU_CONFIG.PAYMENT_URL;
   form.style.display = 'none';
   
+  console.log('[PayU] === SUBMITTING FORM ===');
+  console.log('[PayU] Target URL:', PAYU_CONFIG.PAYMENT_URL);
+  console.log('[PayU] Form fields being sent:');
+  
   Object.keys(formData).forEach(key => {
     const input = document.createElement('input');
     input.type = 'hidden';
     input.name = key;
     input.value = formData[key];
-    console.log(`[PayU] Form field: ${key} = ${formData[key]}`);
+    
+    // Log each field
+    if (key === 'signature' || key === 'merchantId' || key === 'accountId' || key === 'referenceCode' || key === 'amount' || key === 'currency') {
+      console.log(`  ${key}: ${formData[key]}`);
+    }
+    
     form.appendChild(input);
   });
   
-  console.log('[PayU] Submitting form to:', PAYU_CONFIG.PAYMENT_URL);
+  console.log('[PayU] === END FORM DATA ===');
+  
   document.body.appendChild(form);
+  console.log('[PayU] Submitting form to PayU...');
   form.submit();
 };
 
