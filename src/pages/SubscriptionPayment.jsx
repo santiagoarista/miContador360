@@ -6,8 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Button } from '../components/ui/button';
 import { Alert, AlertDescription } from '../components/ui/alert';
 import { Spinner } from '../components/ui/spinner';
-import { CheckCircle, CreditCard, Shield } from 'lucide-react';
-import { PAYU_CONFIG, generateReferenceCode, createPaymentFormData } from '../lib/payu';
+import { CheckCircle, CreditCard, Shield, AlertCircle } from 'lucide-react';
+import { PAYU_CONFIG, generateReferenceCode, createPaymentFormData, submitPaymentForm } from '../lib/payu';
 
 export default function SubscriptionPayment() {
   const navigate = useNavigate();
@@ -60,9 +60,6 @@ export default function SubscriptionPayment() {
       // Create a reference code for this transaction
       const referenceCode = generateReferenceCode(user.id);
 
-      // Create the payment form data
-      const paymentFormData = createPaymentFormData(user, referenceCode);
-
       // Create a pending subscription record
       const { error: dbError } = await supabase
         .from('subscriptions')
@@ -79,23 +76,11 @@ export default function SubscriptionPayment() {
         throw new Error('Error al crear el registro de suscripción');
       }
 
-      // Create a hidden form and submit it to PayU
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = PAYU_CONFIG.PAYMENT_URL;
-      form.style.display = 'none';
-
-      // Add all the payment form fields
-      Object.keys(paymentFormData).forEach(key => {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = key;
-        input.value = paymentFormData[key];
-        form.appendChild(input);
-      });
-
-      document.body.appendChild(form);
-      form.submit();
+      // Create payment form data
+      const paymentFormData = createPaymentFormData(user, referenceCode);
+      
+      // Submit to PayU
+      submitPaymentForm(paymentFormData);
       
     } catch (err) {
       console.error('Payment initialization error:', err);

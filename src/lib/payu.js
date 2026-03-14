@@ -1,5 +1,6 @@
 // PayU Latam Integration for Colombia
-// Documentation: https://developers.payulatam.com/latam/en/docs/integrations/webcheckout-integration.html
+// Using WebCheckout Form Integration
+// Documentation: https://developers.payulatam.com/latam/es/docs/integrations/webcheckout-integration.html
 
 import CryptoJS from 'crypto-js';
 
@@ -10,19 +11,16 @@ const md5 = (string) => {
 
 // PayU Configuration
 export const PAYU_CONFIG = {
-  // Test credentials - Replace with production credentials before going live
   MERCHANT_ID: import.meta.env.VITE_PAYU_MERCHANT_ID || '508029',
   API_KEY: import.meta.env.VITE_PAYU_API_KEY || '4Vj8eK4rloUd272L48hsrarnUA',
   ACCOUNT_ID: import.meta.env.VITE_PAYU_ACCOUNT_ID || '512321', // Colombia account
   
-  // URLs
-  PAYMENT_URL: import.meta.env.VITE_PAYU_PAYMENT_URL || 'https://sandbox.checkout.payulatam.com/ppp-web-gateway-payu/',
-  API_URL: import.meta.env.VITE_PAYU_API_URL || 'https://sandbox.api.payulatam.com/payments-api/4.0/service.cgi',
+  // WebCheckout URL
+  PAYMENT_URL: 'https://sandbox.checkout.payulatam.com/ppp-web-gateway-payu/',
   
   // Response URLs
-  RESPONSE_URL: `${window.location.origin}/payment/response`,
-  CONFIRMATION_URL: import.meta.env.VITE_PAYU_CONFIRMATION_URL || 
-    'https://zijpwpflpuqyuwqnsrme.supabase.co/functions/v1/payu-confirmation',
+  RESPONSE_URL: `${typeof window !== 'undefined' ? window.location.origin : ''}/payment/response`,
+  CONFIRMATION_URL: 'https://zijpwpflpuqyuwqnsrme.supabase.co/functions/v1/payu-confirmation',
   
   // Currency and language
   CURRENCY: 'COP',
@@ -34,19 +32,6 @@ export const PAYU_CONFIG = {
 };
 
 /**
- * Generate MD5 signature for PayU payment
- * Format: ApiKey~merchantId~referenceCode~amount~currency
- * Amount must be string with format: XXXXX.00
- */
-export const generateSignature = (referenceCode, amount, currency = PAYU_CONFIG.CURRENCY) => {
-  // Convert amount to string with 2 decimals
-  const amountStr = typeof amount === 'number' ? amount.toFixed(1) : String(amount);
-  const signatureString = `${PAYU_CONFIG.API_KEY}~${PAYU_CONFIG.MERCHANT_ID}~${referenceCode}~${amountStr}~${currency}`;
-  console.log('[PayU] Signature string:', signatureString);
-  return md5(signatureString);
-};
-
-/**
  * Generate a unique reference code for the transaction
  */
 export const generateReferenceCode = (userId) => {
@@ -55,18 +40,38 @@ export const generateReferenceCode = (userId) => {
 };
 
 /**
- * Create PayU payment form data
+ * Generate MD5 signature for PayU payment
+ * Format: ApiKey~merchantId~referenceCode~amount~currency
+ */
+export const generateSignature = (referenceCode, amount) => {
+  const signatureString = `${PAYU_CONFIG.API_KEY}~${PAYU_CONFIG.MERCHANT_ID}~${referenceCode}~${amount}~${PAYU_CONFIG.CURRENCY}`;
+  console.log('[PayU] Generating signature for:', {
+    apiKey: PAYU_CONFIG.API_KEY.substring(0, 10) + '...',
+    merchantId: PAYU_CONFIG.MERCHANT_ID,
+    referenceCode,
+    amount,
+    currency: PAYU_CONFIG.CURRENCY,
+  });
+  console.log('[PayU] Signature string:', signatureString);
+  const signature = md5(signatureString);
+  console.log('[PayU] Generated signature:', signature);
+  return signature;
+};
+
+/**
+ * Create PayU payment form data for WebCheckout
  */
 export const createPaymentFormData = (user, referenceCode) => {
   const amount = PAYU_CONFIG.SUBSCRIPTION_AMOUNT;
-  const amountStr = String(amount).includes('.') ? amount : `${amount}.0`;
   const signature = generateSignature(referenceCode, amount);
   
-  console.log('[PayU] Payment form data:', {
+  console.log('[PayU] Payment form data to submit:', {
     merchantId: PAYU_CONFIG.MERCHANT_ID,
-    amount: amountStr,
-    referenceCode: referenceCode,
-    signature: signature,
+    accountId: PAYU_CONFIG.ACCOUNT_ID,
+    referenceCode,
+    amount,
+    signature,
+    buyerEmail: user.email,
   });
   
   return {
@@ -74,33 +79,59 @@ export const createPaymentFormData = (user, referenceCode) => {
     accountId: PAYU_CONFIG.ACCOUNT_ID,
     description: 'Suscripción Mensual - Sistema Contable',
     referenceCode: referenceCode,
-    amount: amountStr,
+    amount: amount,
     tax: 0,
     taxReturnBase: 0,
     currency: PAYU_CONFIG.CURRENCY,
     signature: signature,
-    test: import.meta.env.VITE_PAYU_TEST_MODE !== 'false' ? '1' : '0',
+    test: 1, // Always test mode in sandbox
     buyerEmail: user.email,
     responseUrl: PAYU_CONFIG.RESPONSE_URL,
     confirmationUrl: PAYU_CONFIG.CONFIRMATION_URL,
-    paymentMethods: 'MASTERCARD,VISA,AMEX,PSE,BALOTO,EFECTY,BANK_REFERENCED,OTHERS_CASH',
+    paymentMethods: 'MASTERCARD,VISA,AMEX,PSE',
     extra1: user.id,
     extra2: 'monthly_subscription',
   };
 };
 
 /**
+ * Submit payment form to PayU
+ */
+export const submitPaymentForm = (formData) => {
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = PAYU_CONFIG.PAYMENT_URL;
+  form.style.display = 'none';
+  
+  Object.keys(formData).forEach(key => {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = key;
+    input.value = formData[key];
+    console.log(`[PayU] Form field: ${key} = ${formData[key]}`);
+    form.appendChild(input);
+  });
+  
+  console.log('[PayU] Submitting form to:', PAYU_CONFIG.PAYMENT_URL);
+  document.body.appendChild(form);
+  form.submit();
+};
+
+/**
  * Verify PayU response signature
- * Format for response: ApiKey~merchantId~referenceCode~amount~currency~transactionState
  */
 export const verifyResponseSignature = (data) => {
   const { referenceCode, TX_VALUE, currency, transactionState, signature } = data;
-  
-  // Round to 1 decimal for signature verification
   const amount = parseFloat(TX_VALUE).toFixed(1);
   
   const signatureString = `${PAYU_CONFIG.API_KEY}~${PAYU_CONFIG.MERCHANT_ID}~${referenceCode}~${amount}~${currency}~${transactionState}`;
   const calculatedSignature = md5(signatureString);
+  
+  console.log('[PayU] Verifying response signature:', {
+    received: signature,
+    calculated: calculatedSignature,
+    match: signature === calculatedSignature,
+  });
   
   return calculatedSignature === signature;
 };
@@ -111,31 +142,11 @@ export const verifyResponseSignature = (data) => {
 export const getTransactionStatusMessage = (state) => {
   const messages = {
     '4': { status: 'approved', message: '¡Pago aprobado! Tu suscripción está activa.' },
-    '6': { status: 'declined', message: 'Pago rechazado. Por favor intenta con otro método de pago.' },
-    '104': { status: 'error', message: 'Error en el pago. Por favor contacta a soporte.' },
-    '7': { status: 'pending', message: 'Pago pendiente de confirmación. Te notificaremos cuando se complete.' },
-    '5': { status: 'expired', message: 'Transacción expirada. Por favor intenta nuevamente.' },
+    '6': { status: 'declined', message: 'Pago rechazado.' },
+    '104': { status: 'error', message: 'Error en la transacción.' },
+    '7': { status: 'pending', message: 'Transacción pendiente.' },
+    '5': { status: 'expired', message: 'Transacción expirada.' },
   };
   
-  return messages[state] || { status: 'unknown', message: 'Estado de transacción desconocido.' };
-};
-
-/**
- * Submit payment form programmatically
- */
-export const submitPayUForm = (formData) => {
-  const form = document.createElement('form');
-  form.method = 'POST';
-  form.action = PAYU_CONFIG.PAYMENT_URL;
-  
-  Object.keys(formData).forEach(key => {
-    const input = document.createElement('input');
-    input.type = 'hidden';
-    input.name = key;
-    input.value = formData[key];
-    form.appendChild(input);
-  });
-  
-  document.body.appendChild(form);
-  form.submit();
+  return messages[state] || { status: 'unknown', message: 'Estado desconocido.' };
 };
