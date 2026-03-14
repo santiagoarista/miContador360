@@ -70,7 +70,7 @@ export default function Profile() {
       const { error } = await supabase
         .from('subscriptions')
         .update({
-          status: 'canceled',
+          status: 'cancelled',
           canceled_at: new Date().toISOString(),
         })
         .eq('user_id', user.id);
@@ -114,7 +114,7 @@ export default function Profile() {
         icon: CheckCircle,
         label: 'Activa',
       },
-      canceled: {
+      cancelled: {
         badge: 'bg-destructive/10 text-destructive border border-destructive/30',
         icon: AlertCircle,
         label: 'Cancelada',
@@ -123,6 +123,11 @@ export default function Profile() {
         badge: 'bg-warning/10 text-warning border border-warning/30',
         icon: Clock,
         label: 'Pendiente',
+      },
+      expired: {
+        badge: 'bg-warning/10 text-warning border border-warning/30',
+        icon: Clock,
+        label: 'Expirada',
       },
     };
 
@@ -266,7 +271,7 @@ export default function Profile() {
                 </div>
               )}
 
-              {subscription.status === 'canceled' && subscription.canceled_at && (
+              {(subscription.status === 'cancelled') && subscription.canceled_at && (
                 <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
                   <p className="text-sm text-muted-foreground mb-1">Fecha de Cancelación</p>
                   <p className="text-foreground font-medium">
