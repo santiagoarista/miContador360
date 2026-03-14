@@ -3,10 +3,62 @@
 // Documentation: https://developers.payulatam.com/latam/es/docs/integrations/webcheckout-integration.html
 
 import CryptoJS from 'crypto-js';
+import { supabase } from './supabase';
 
 // MD5 implementation using crypto-js
 const md5 = (string) => {
   return CryptoJS.MD5(string).toString();
+};
+
+// Cache for configuration
+let configCache = null;
+let configCacheTime = 0;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * Get dynamic configuration from Supabase
+ */
+export const getConfig = async () => {
+  const now = Date.now();
+  
+  // Return cached config if still valid
+  if (configCache && (now - configCacheTime) < CACHE_DURATION) {
+    return configCache;
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('config')
+      .select('key, value')
+      .in('key', ['response_url', 'confirmation_url']);
+    
+    if (error) throw error;
+    
+    // Build config object from database
+    const dynamicConfig = {
+      response_url: 'https://newchat-j973tyhqdvhcmzbgqf2g5q.vercel.app/payment/response',
+      confirmation_url: 'https://zijpwpflpuqyuwqnsrme.supabase.co/functions/v1/payu-confirmation'
+    };
+    
+    if (data) {
+      data.forEach(row => {
+        dynamicConfig[row.key] = row.value;
+      });
+    }
+    
+    // Cache the config
+    configCache = dynamicConfig;
+    configCacheTime = now;
+    
+    return dynamicConfig;
+  } catch (err) {
+    console.warn('[PayU] Could not load config from Supabase, using defaults:', err);
+    // Return defaults if query fails
+    return {
+      response_url: 'https://newchat-j973tyhqdvhcmzbgqf2g5q.vercel.app/payment/response',
+      confirmation_url: 'https://zijpwpflpuqyuwqnsrme.supabase.co/functions/v1/payu-confirmation'
+    };
+  }
 };
 
 // PayU Configuration
@@ -18,8 +70,8 @@ export const PAYU_CONFIG = {
   // WebCheckout URL
   PAYMENT_URL: 'https://sandbox.checkout.payulatam.com/ppp-web-gateway-payu/',
   
-  // Response URLs
-  RESPONSE_URL: `${typeof window !== 'undefined' ? window.location.origin : ''}/payment/response`,
+  // Response URLs - will be loaded dynamically
+  RESPONSE_URL: 'https://newchat-j973tyhqdvhcmzbgqf2g5q.vercel.app/payment/response',
   CONFIRMATION_URL: 'https://zijpwpflpuqyuwqnsrme.supabase.co/functions/v1/payu-confirmation',
   
   // Currency and language
@@ -69,7 +121,10 @@ export const generateSignature = (referenceCode, amount) => {
 /**
  * Create PayU payment form data for WebCheckout
  */
-export const createPaymentFormData = (user, referenceCode) => {
+export const createPaymentFormData = async (user, referenceCode) => {
+  // Get dynamic configuration
+  const dynamicConfig = await getConfig();
+  
   // Amount MUST be a string with two decimal places for PayU signature
   const amount = String(PAYU_CONFIG.SUBSCRIPTION_AMOUNT) + '.00';
   const signature = generateSignature(referenceCode, amount);
@@ -81,6 +136,8 @@ export const createPaymentFormData = (user, referenceCode) => {
     amount,
     signature,
     buyerEmail: user.email,
+    responseUrl: dynamicConfig.response_url,
+    confirmationUrl: dynamicConfig.confirmation_url,
   });
   
   return {
@@ -95,8 +152,8 @@ export const createPaymentFormData = (user, referenceCode) => {
     signature: signature,
     test: 1, // Always test mode in sandbox
     buyerEmail: user.email,
-    responseUrl: PAYU_CONFIG.RESPONSE_URL,
-    confirmationUrl: PAYU_CONFIG.CONFIRMATION_URL,
+    responseUrl: dynamicConfig.response_url,
+    confirmationUrl: dynamicConfig.confirmation_url,
     paymentMethods: 'MASTERCARD,VISA,AMEX,PSE',
     extra1: user.id,
     extra2: 'monthly_subscription',

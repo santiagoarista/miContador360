@@ -77,7 +77,7 @@ export default function SubscriptionPayment() {
       }
 
       // Create payment form data
-      const paymentFormData = createPaymentFormData(user, referenceCode);
+      const paymentFormData = await createPaymentFormData(user, referenceCode);
       
       // Submit to PayU
       submitPaymentForm(paymentFormData);
