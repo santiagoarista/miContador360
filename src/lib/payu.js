@@ -94,19 +94,20 @@ export const generateReferenceCode = (userId) => {
 /**
  * Generate MD5 signature for PayU payment
  * Format: ApiKey~merchantId~referenceCode~amount~currency
+ * IMPORTANTE: El amount en la firma NO debe tener decimales
  * According to PayU docs: https://developers.payulatam.com/latam/es/docs/integrations/webcheckout-integration/payment-form.html
  */
 export const generateSignature = (referenceCode, amount) => {
-  // Ensure amount is a string with explicit decimals
-  const amountStr = String(amount);
+  // Remove decimals from amount for signature calculation
+  const amountForSignature = String(amount).split('.')[0];
   
-  const signatureString = `${PAYU_CONFIG.API_KEY}~${PAYU_CONFIG.MERCHANT_ID}~${referenceCode}~${amountStr}~${PAYU_CONFIG.CURRENCY}`;
+  const signatureString = `${PAYU_CONFIG.API_KEY}~${PAYU_CONFIG.MERCHANT_ID}~${referenceCode}~${amountForSignature}~${PAYU_CONFIG.CURRENCY}`;
   
   console.log('[PayU] === SIGNATURE CALCULATION ===');
   console.log('[PayU] API Key:', PAYU_CONFIG.API_KEY);
   console.log('[PayU] Merchant ID:', PAYU_CONFIG.MERCHANT_ID);
   console.log('[PayU] Reference Code:', referenceCode);
-  console.log('[PayU] Amount:', amountStr);
+  console.log('[PayU] Amount (without decimals for signature):', amountForSignature);
   console.log('[PayU] Currency:', PAYU_CONFIG.CURRENCY);
   console.log('[PayU] Raw string to hash:', signatureString);
   
@@ -166,19 +167,14 @@ export const submitPaymentForm = (formData) => {
   
   console.log('[PayU] === SUBMITTING FORM ===');
   console.log('[PayU] Target URL:', PAYU_CONFIG.PAYMENT_URL);
-  console.log('[PayU] Form fields being sent:');
+  console.log('[PayU] All form fields being sent:');
+  console.log(formData);
   
   Object.keys(formData).forEach(key => {
     const input = document.createElement('input');
     input.type = 'hidden';
     input.name = key;
     input.value = formData[key];
-    
-    // Log each field
-    if (key === 'signature' || key === 'merchantId' || key === 'accountId' || key === 'referenceCode' || key === 'amount' || key === 'currency') {
-      console.log(`  ${key}: ${formData[key]}`);
-    }
-    
     form.appendChild(input);
   });
   
