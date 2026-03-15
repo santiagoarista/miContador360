@@ -49,15 +49,15 @@ serve(async (req: Request): Promise<Response> => {
           notifyUrl: paymentData.confirmationUrl,
           additionalValues: {
             TX_VALUE: {
-              value: paymentData.amount,
+              value: `${paymentData.amount}`,
               currency: paymentData.currency,
             },
             TX_TAX: {
-              value: 0,
+              value: '0',
               currency: paymentData.currency,
             },
             TX_TAX_RETURN_BASE: {
-              value: 0,
+              value: '0',
               currency: paymentData.currency,
             },
           },
@@ -72,7 +72,7 @@ serve(async (req: Request): Promise<Response> => {
               city: 'Bogotá',
               state: 'Cundinamarca',
               country: 'CO',
-              postalCode: '0000',
+              postalCode: '00000',
               phone: paymentData.payerPhone,
             },
           },
@@ -88,12 +88,12 @@ serve(async (req: Request): Promise<Response> => {
             city: 'Bogotá',
             state: 'Cundinamarca',
             country: 'CO',
-            postalCode: '0000',
+            postalCode: '00000',
             phone: paymentData.payerPhone,
           },
         },
         creditCard: {
-          number: paymentData.creditCardNumber,
+          number: paymentData.creditCardNumber.replace(/\D/g, ''),
           securityCode: paymentData.creditCardSecurityCode,
           expirationDate: paymentData.creditCardExpiryDate,
           name: paymentData.creditCardName,
