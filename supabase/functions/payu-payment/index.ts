@@ -1,10 +1,15 @@
 // Supabase Edge Function for PayU Payment Processing
 // Handles payment requests and forwards to PayU API
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { serve } from "std/http/server.ts";
+import { createClient } from "@supabase/supabase-js";
 
-serve(async (req: Request) => {
+serve(async (req: Request): Promise<Response> => {
+  // Handle CORS
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: { 'Access-Control-Allow-Origin': '*' } });
+  }
+
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
       status: 405,
@@ -119,7 +124,12 @@ serve(async (req: Request) => {
     console.log('[PayU Function] PayU Response:', responseData);
 
     // Extract transaction info from response
-    let result = {
+    const result: {
+      success: boolean;
+      transactionState: string | null;
+      transactionId: string | null;
+      threeDomainSecurityUrl: string | null;
+    } = {
       success: false,
       transactionState: null,
       transactionId: null,
@@ -171,7 +181,7 @@ serve(async (req: Request) => {
   } catch (error) {
     console.error('[PayU Function] Error:', error);
     return new Response(
-      JSON.stringify({ error: 'Internal server error', details: error.message }),
+      JSON.stringify({ error: 'Internal server error', details: (error as Error).message }),
       {
         status: 500,
         headers: { 'Content-Type': 'application/json' },
