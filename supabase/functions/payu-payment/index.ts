@@ -111,6 +111,7 @@ serve(async (req: Request): Promise<Response> => {
     };
 
     console.log('[PayU Function] Sending request to PayU API');
+    console.log('[PayU Function] PayU Request:', JSON.stringify(payuRequest, null, 2));
 
     // Send to PayU API
     const payuResponse = await fetch(
@@ -126,7 +127,7 @@ serve(async (req: Request): Promise<Response> => {
     );
 
     const responseData = await payuResponse.json();
-    console.log('[PayU Function] PayU Response:', responseData);
+    console.log('[PayU Function] PayU Response:', JSON.stringify(responseData, null, 2));
 
     // Extract transaction info from response
     const result: {
@@ -134,6 +135,7 @@ serve(async (req: Request): Promise<Response> => {
       transactionState: string | null;
       transactionId: string | null;
       threeDomainSecurityUrl: string | null;
+      payuError?: string;
     } = {
       success: false,
       transactionState: null,
@@ -151,6 +153,14 @@ serve(async (req: Request): Promise<Response> => {
       console.error('[PayU Function] PayU Error:', responseData.error);
       result.success = false;
       result.transactionState = '104';
+      result.payuError = responseData.error;
+    } else if (responseData.transactionResponse?.responseCode !== 'APPROVED') {
+      // PayU returned a response but not approved
+      const txResponse = responseData.transactionResponse;
+      console.error('[PayU Function] PayU Response Not Approved:', txResponse);
+      result.success = false;
+      result.transactionState = '104';
+      result.payuError = txResponse?.responseMessage || 'Payment declined by PayU';
     }
 
     return new Response(JSON.stringify(result), {
