@@ -208,10 +208,19 @@ export default function Inventory() {
 
       const adjustAssetsForPayment = (assets, method, amount) => {
         if (!amount || !method) return;
-        if (method === "efectivo") {
+        console.log(
+          "[Inventory] adjustAssetsForPayment:",
+          { method, amount, normalized: method.toLowerCase() }
+        );
+        if (method.toLowerCase() === "efectivo") {
           assets.efectivo = (assets.efectivo || 0) - amount;
-        } else if (method === "transferencia bancaria") {
+          console.log("[Inventory] Ajustando efectivo:", assets.efectivo);
+        } else if (method.toLowerCase() === "transferencia bancaria") {
           assets.bancos = (assets.bancos || 0) - amount;
+          console.log("[Inventory] Ajustando bancos:", assets.bancos);
+        } else if (method.toLowerCase() === "crédito") {
+          // El crédito se maneja como pasivo (proveedores)
+          console.log("[Inventory] Crédito se manejará como pasivo");
         }
       };
 
