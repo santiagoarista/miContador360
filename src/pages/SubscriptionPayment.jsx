@@ -7,7 +7,7 @@ import { Button } from '../components/ui/button';
 import { Alert, AlertDescription } from '../components/ui/alert';
 import { Spinner } from '../components/ui/spinner';
 import { CheckCircle, CreditCard, Shield, AlertCircle } from 'lucide-react';
-import { PAYU_CONFIG, generateReferenceCode, createPaymentFormData, submitPaymentForm } from '../lib/payu';
+import { PAYU_CONFIG, generateReferenceCode, createPaymentAPI } from '../lib/payu-api';
 
 export default function SubscriptionPayment() {
   const navigate = useNavigate();
@@ -57,7 +57,13 @@ export default function SubscriptionPayment() {
     setError('');
 
     try {
-      // Create a reference code for this transaction
+      // Validate card data
+      if (!cardData.cardNumber || !cardData.cardholderName || !cardData.expiryDate || !cardData.cvv) {
+        setError('Por favor completa todos los campos de la tarjeta.');
+        setLoading(false);
+        return;
+      }
+
       const referenceCode = generateReferenceCode(user.id);
 
       // Create a pending subscription record
@@ -76,15 +82,44 @@ export default function SubscriptionPayment() {
         throw new Error('Error al crear el registro de suscripción');
       }
 
-      // Create payment form data
-      const paymentFormData = await createPaymentFormData(user, referenceCode);
+      // Process payment via API
+      const paymentResult = await createPaymentAPI(user, cardData, referenceCode);
       
-      // Submit to PayU
-      submitPaymentForm(paymentFormData);
+      console.log('[Payment] Result:', paymentResult);
+
+      // If response has a 3DS redirect URL, go there
+      if (paymentResult.threeDomainSecurityUrl) {
+        console.log('[Payment] Redirecting to 3DS:', paymentResult.threeDomainSecurityUrl);
+        window.location.href = paymentResult.threeDomainSecurityUrl;
+        return;
+      }
+
+      // If payment was approved immediately
+      if (paymentResult.transactionState === '4') {
+        navigate('/dashboard', { state: { paymentSuccess: true } });
+        return;
+      }
+
+      // If payment was declined or error
+      if (paymentResult.transactionState === '6' || paymentResult.transactionState === '104') {
+        setError('Pago rechazado. Por favor intenta con otro método o tarjeta.');
+        setLoading(false);
+        return;
+      }
+
+      // If payment is pending
+      if (paymentResult.transactionState === '7') {
+        setError('Tu pago está pendiente. Te notificaremos cuando se procese.');
+        setLoading(false);
+        return;
+      }
+
+      // Default: payment processed, await webhook notification
+      navigate('/dashboard', { state: { paymentProcessing: true } });
       
     } catch (err) {
       console.error('Payment initialization error:', err);
-      setError(err.message || 'Error al iniciar el pago');
+      setError(err.message || 'Error al procesar el pago. Por favor intenta nuevamente.');
       setLoading(false);
     }
   };
