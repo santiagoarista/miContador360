@@ -146,17 +146,12 @@ export const createPaymentFormData = async (user, referenceCode) => {
     description: 'Suscripción Mensual - Sistema Contable',
     referenceCode: referenceCode,
     amount: amount,
-    tax: 0,
-    taxReturnBase: 0,
     currency: PAYU_CONFIG.CURRENCY,
     signature: signature,
-    test: 1, // Always test mode in sandbox
+    test: 1,
     buyerEmail: user.email,
     responseUrl: dynamicConfig.response_url,
     confirmationUrl: dynamicConfig.confirmation_url,
-    paymentMethods: 'MASTERCARD,VISA,AMEX,PSE',
-    extra1: user.id,
-    extra2: 'monthly_subscription',
   };
 };
 
