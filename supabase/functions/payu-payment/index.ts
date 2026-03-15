@@ -25,10 +25,20 @@ serve(async (req: Request): Promise<Response> => {
   try {
     const paymentData = await req.json();
     
+    // Validate required fields
+    if (!paymentData.creditCardExpiryDate) {
+      console.error('[PayU Function] Missing creditCardExpiryDate');
+      return new Response(JSON.stringify({ error: 'Missing creditCardExpiryDate' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
+    
     console.log('[PayU Function] Processing payment:', {
       referenceCode: paymentData.referenceCode,
       amount: paymentData.amount,
       payer: paymentData.payerEmail,
+      expiryDate: paymentData.creditCardExpiryDate,
     });
 
     // Generate a simple device session ID (ISO timestamp + random)
@@ -37,22 +47,32 @@ serve(async (req: Request): Promise<Response> => {
       const random = Math.random().toString(36).substring(2, 8);
       return `${timestamp}${random}`;
     };
-    const expiryParts = paymentData.creditCardExpiryDate.split('/');
-    let expiryMonth = expiryParts[0];
-    let expiryYear = expiryParts[1];
-    
-    // If year is 2 digits, convert to 4 digits (28 -> 2028)
-    if (expiryYear.length === 2) {
-      const currentYear = new Date().getFullYear();
-      const century = Math.floor(currentYear / 100) * 100;
-      expiryYear = (century + parseInt(expiryYear)).toString();
+
+    // Convert expiry date from MM/YY to YYYY/MM format
+    let expirationDateFormatted = paymentData.creditCardExpiryDate;
+    try {
+      const expiryParts = paymentData.creditCardExpiryDate.split('/');
+      if (expiryParts.length === 2) {
+        let expiryMonth = expiryParts[0];
+        let expiryYear = expiryParts[1];
+        
+        // If year is 2 digits, convert to 4 digits (28 -> 2028)
+        if (expiryYear.length === 2) {
+          const currentYear = new Date().getFullYear();
+          const century = Math.floor(currentYear / 100) * 100;
+          expiryYear = (century + parseInt(expiryYear)).toString();
+        }
+        
+        expirationDateFormatted = `${expiryYear}/${expiryMonth}`;
+      }
+      console.log('[PayU Function] Expiry date conversion:', {
+        original: paymentData.creditCardExpiryDate,
+        formatted: expirationDateFormatted,
+      });
+    } catch (err) {
+      console.error('[PayU Function] Error parsing expiry date:', err);
+      throw new Error(`Invalid expiry date format: ${paymentData.creditCardExpiryDate}`);
     }
-    
-    const expirationDateFormatted = `${expiryYear}/${expiryMonth}`;
-    console.log('[PayU Function] Expiry date conversion:', {
-      original: paymentData.creditCardExpiryDate,
-      formatted: expirationDateFormatted,
-    });
 
     // Build PayU request
     const payuRequest = {

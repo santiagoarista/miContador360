@@ -46,7 +46,6 @@ export const createPaymentAPI = async (user, cardData, referenceCode) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || ''}`,
       },
       body: JSON.stringify({
         merchantId: PAYU_CONFIG.MERCHANT_ID,
