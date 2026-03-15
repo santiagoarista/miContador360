@@ -20,12 +20,14 @@ export default function SubscriptionPayment() {
   const [cardData, setCardData] = useState({
     cardNumber: '',
     cardholderName: '',
-    expiryDate: '',
+    expiryMonth: '',
+    expiryYear: '',
     cvv: '',
   });
   const [addressData, setAddressData] = useState({
     dniNumber: '',
-    phone: '',
+    phoneCountryCode: '+57',
+    phoneNumber: '',
     street1: '',
     street2: '',
     city: 'Bogota',
@@ -76,14 +78,14 @@ export default function SubscriptionPayment() {
 
     try {
       // Validate card data
-      if (!cardData.cardNumber || !cardData.cardholderName || !cardData.expiryDate || !cardData.cvv) {
+      if (!cardData.cardNumber || !cardData.cardholderName || !cardData.expiryMonth || !cardData.expiryYear || !cardData.cvv) {
         setError('Por favor completa todos los campos de la tarjeta.');
         setLoading(false);
         return;
       }
 
       // Validate address data
-      if (!addressData.dniNumber || !addressData.phone || !addressData.street1 || !addressData.city || !addressData.postalCode) {
+      if (!addressData.dniNumber || !addressData.phoneNumber || !addressData.street1 || !addressData.city || !addressData.postalCode) {
         setError('Por favor completa toda tu información de dirección.');
         setLoading(false);
         return;
@@ -108,7 +110,9 @@ export default function SubscriptionPayment() {
       }
 
       // Process payment via API
-      const paymentResult = await createPaymentAPI(user, cardData, referenceCode, addressData);
+      const expiryDate = `${cardData.expiryMonth}/${cardData.expiryYear}`;
+      const phone = `${addressData.phoneCountryCode.replace(/\D/g, '')}${addressData.phoneNumber.replace(/\D/g, '')}`;
+      const paymentResult = await createPaymentAPI(user, { ...cardData, expiryDate }, referenceCode, { ...addressData, phone });
       
       console.log('[Payment] Result:', paymentResult);
 
@@ -124,7 +128,7 @@ export default function SubscriptionPayment() {
               status: 'active',
               payu_transaction_id: paymentResult.transactionId,
               payu_order_id: paymentResult.orderId,
-              activated_at: new Date().toISOString(),
+              subscription_start_date: new Date().toISOString(),
             })
             .eq('user_id', user.id);
           
@@ -201,7 +205,8 @@ export default function SubscriptionPayment() {
       setCardData({
         cardNumber: '',
         cardholderName: '',
-        expiryDate: '',
+        expiryMonth: '',
+        expiryYear: '',
         cvv: '',
       });
     } else if (paymentResult.status === 'pending') {
@@ -331,16 +336,33 @@ export default function SubscriptionPayment() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div>
-                <label className="text-sm font-medium block mb-2">Vencimiento (MM/YY)</label>
+                <label className="text-sm font-medium block mb-2">Mes (MM)</label>
                 <input
                   type="text"
-                  placeholder="06/28"
-                  value={cardData.expiryDate}
-                  onChange={(e) => setCardData({ ...cardData, expiryDate: e.target.value })}
+                  placeholder="06"
+                  value={cardData.expiryMonth}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '').slice(0, 2);
+                    setCardData({ ...cardData, expiryMonth: value });
+                  }}
                   className="w-full px-4 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                  maxLength="5"
+                  maxLength="2"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium block mb-2">Año (YY)</label>
+                <input
+                  type="text"
+                  placeholder="28"
+                  value={cardData.expiryYear}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '').slice(0, 2);
+                    setCardData({ ...cardData, expiryYear: value });
+                  }}
+                  className="w-full px-4 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                  maxLength="2"
                 />
               </div>
               <div>
@@ -379,13 +401,30 @@ export default function SubscriptionPayment() {
               </div>
               <div>
                 <label className="text-sm font-medium block mb-2">Teléfono</label>
-                <input
-                  type="tel"
-                  placeholder="5700000000"
-                  value={addressData.phone}
-                  onChange={(e) => setAddressData({ ...addressData, phone: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                />
+                <div className="flex gap-2">
+                  <select
+                    value={addressData.phoneCountryCode}
+                    onChange={(e) => setAddressData({ ...addressData, phoneCountryCode: e.target.value })}
+                    className="px-3 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="+57">+57 Colombia</option>
+                    <option value="+1">+1 USA/Canadá</option>
+                    <option value="+34">+34 España</option>
+                    <option value="+52">+52 México</option>
+                    <option value="+55">+55 Brasil</option>
+                    <option value="+56">+56 Chile</option>
+                    <option value="+54">+54 Argentina</option>
+                    <option value="+58">+58 Venezuela</option>
+                    <option value="+51">+51 Perú</option>
+                  </select>
+                  <input
+                    type="tel"
+                    placeholder="3001234567"
+                    value={addressData.phoneNumber}
+                    onChange={(e) => setAddressData({ ...addressData, phoneNumber: e.target.value.replace(/\D/g, '') })}
+                    className="flex-1 px-4 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
               </div>
             </div>
 
