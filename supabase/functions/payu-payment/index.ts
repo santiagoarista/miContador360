@@ -31,6 +31,24 @@ serve(async (req: Request): Promise<Response> => {
       payer: paymentData.payerEmail,
     });
 
+    // Convert expiry date from MM/YY to YYYY/MM format
+    const expiryParts = paymentData.creditCardExpiryDate.split('/');
+    let expiryMonth = expiryParts[0];
+    let expiryYear = expiryParts[1];
+    
+    // If year is 2 digits, convert to 4 digits (28 -> 2028)
+    if (expiryYear.length === 2) {
+      const currentYear = new Date().getFullYear();
+      const century = Math.floor(currentYear / 100) * 100;
+      expiryYear = (century + parseInt(expiryYear)).toString();
+    }
+    
+    const expirationDateFormatted = `${expiryYear}/${expiryMonth}`;
+    console.log('[PayU Function] Expiry date conversion:', {
+      original: paymentData.creditCardExpiryDate,
+      formatted: expirationDateFormatted,
+    });
+
     // Build PayU request
     const payuRequest = {
       test: false,
@@ -95,7 +113,7 @@ serve(async (req: Request): Promise<Response> => {
         creditCard: {
           number: paymentData.creditCardNumber.replace(/\D/g, ''),
           securityCode: paymentData.creditCardSecurityCode,
-          expirationDate: paymentData.creditCardExpiryDate,
+          expirationDate: expirationDateFormatted,
           name: paymentData.creditCardName,
         },
         extraParameters: {
