@@ -15,6 +15,12 @@ export default function SubscriptionPayment() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [subscription, setSubscription] = useState(null);
+  const [cardData, setCardData] = useState({
+    cardNumber: '',
+    cardholderName: '',
+    expiryDate: '',
+    cvv: '',
+  });
 
   useEffect(() => {
     checkExistingSubscription();
@@ -215,6 +221,64 @@ export default function SubscriptionPayment() {
             </p>
           </div>
 
+          {/* Credit Card Form */}
+          <div className="space-y-4 border-t pt-6">
+            <h3 className="font-semibold">Información de la Tarjeta de Crédito</h3>
+            
+            <div>
+              <label className="text-sm font-medium block mb-2">Número de Tarjeta</label>
+              <input
+                type="text"
+                placeholder="1234 5678 9012 3456"
+                value={cardData.cardNumber}
+                onChange={(e) => setCardData({ ...cardData, cardNumber: e.target.value.replace(/\s/g, '') })}
+                className="w-full px-4 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                maxLength="16"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium block mb-2">Nombre del Titular</label>
+              <input
+                type="text"
+                placeholder="JUAN PEREZ"
+                value={cardData.cardholderName}
+                onChange={(e) => setCardData({ ...cardData, cardholderName: e.target.value })}
+                className="w-full px-4 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium block mb-2">Vencimiento (MM/YY)</label>
+                <input
+                  type="text"
+                  placeholder="06/28"
+                  value={cardData.expiryDate}
+                  onChange={(e) => setCardData({ ...cardData, expiryDate: e.target.value })}
+                  className="w-full px-4 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                  maxLength="5"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium block mb-2">CVV</label>
+                <input
+                  type="text"
+                  placeholder="123"
+                  value={cardData.cvv}
+                  onChange={(e) => setCardData({ ...cardData, cvv: e.target.value })}
+                  className="w-full px-4 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                  maxLength="4"
+                />
+              </div>
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              <AlertCircle className="w-4 h-4 inline mr-1" />
+              Para pruebas usa: 4111 1111 1111 1111 (cualquier fecha futura y CVV)
+            </p>
+          </div>
+
           {/* Action Buttons */}
           <div className="space-y-3">
             <Button 
@@ -226,10 +290,10 @@ export default function SubscriptionPayment() {
               {loading ? (
                 <>
                   <Spinner className="mr-2 h-4 w-4" />
-                  Procesando...
+                  Procesando pago...
                 </>
               ) : (
-                'Continuar al pago'
+                `Pagar $${PAYU_CONFIG.SUBSCRIPTION_AMOUNT.toLocaleString('es-CO')} COP`
               )}
             </Button>
           </div>
