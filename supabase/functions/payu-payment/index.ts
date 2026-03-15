@@ -152,6 +152,13 @@ serve(async (req: Request): Promise<Response> => {
     console.log('[PayU] Request signature:', payuRequest.transaction.order.signature);
 
     // Send to PayU
+    // PayU API expects form-encoded JSON (not direct JSON content-type)
+    const formData = new URLSearchParams();
+    formData.append('merchantId', paymentData.merchantId);
+    formData.append('apiKey', paymentData.apiKey);
+    formData.append('apiLogin', paymentData.apiLogin);
+    
+    // Send the full request as JSON stringified
     const payuResponse = await fetch(
       'https://sandbox.api.payulatam.com/payments-api/4.0/service.cgi',
       {
@@ -163,8 +170,34 @@ serve(async (req: Request): Promise<Response> => {
       }
     );
 
-    const responseData = await payuResponse.json();
-    console.log('[PayU] Response:', responseData);
+    // Get response as text first
+    const responseText = await payuResponse.text();
+    console.log('[PayU] Raw response status:', payuResponse.status);
+    console.log('[PayU] Raw response length:', responseText.length);
+    console.log('[PayU] Raw response (first 1000 chars):', responseText.substring(0, 1000));
+    
+    let responseData;
+    try {
+      responseData = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error('[PayU] Failed to parse response as JSON');
+      console.error('[PayU] Parse error:', parseError.message);
+      
+      // PayU returned XML or error - return detailed error
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: 'PayU returned invalid/XML response - check logs',
+          responsePreview: responseText.substring(0, 300),
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        }
+      );
+    }
+
+    console.log('[PayU] Successfully parsed response JSON');
 
     // Parse PayU response
     let result: any = {
