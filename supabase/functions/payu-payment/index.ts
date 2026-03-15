@@ -31,7 +31,12 @@ serve(async (req: Request): Promise<Response> => {
       payer: paymentData.payerEmail,
     });
 
-    // Convert expiry date from MM/YY to YYYY/MM format
+    // Generate a simple device session ID (ISO timestamp + random)
+    const generateDeviceSessionId = () => {
+      const timestamp = Date.now().toString(36);
+      const random = Math.random().toString(36).substring(2, 8);
+      return `${timestamp}${random}`;
+    };
     const expiryParts = paymentData.creditCardExpiryDate.split('/');
     let expiryMonth = expiryParts[0];
     let expiryYear = expiryParts[1];
@@ -122,7 +127,7 @@ serve(async (req: Request): Promise<Response> => {
         type: 'AUTHORIZATION_AND_CAPTURE',
         paymentMethod: 'VISA',
         paymentCountry: 'CO',
-        deviceSessionId: crypto.randomUUID(),
+        deviceSessionId: generateDeviceSessionId(),
         ipAddress: '192.168.1.1',
         userAgent: 'PayU Integration',
       },
