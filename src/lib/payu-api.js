@@ -30,7 +30,7 @@ export const generateReferenceCode = (userId) => {
  * Create PayU payment request via API
  * Sends directly to Supabase Edge Function (bypass auth)
  */
-export const createPaymentAPI = async (user, cardData, referenceCode) => {
+export const createPaymentAPI = async (user, cardData, referenceCode, addressData) => {
   try {
     console.log('[PayU] Creating payment request via API...');
     
@@ -63,7 +63,8 @@ export const createPaymentAPI = async (user, cardData, referenceCode) => {
         // Payer info
         payerFullName: cardData.cardholderName,
         payerEmail: user.email,
-        payerPhone: '0000000000',
+        payerPhone: addressData?.phone || '0000000000',
+        payerDniNumber: addressData?.dniNumber || '0000000000',
         payerId: user.id,
         
         // Card info
@@ -71,6 +72,24 @@ export const createPaymentAPI = async (user, cardData, referenceCode) => {
         creditCardSecurityCode: cardData.cvv,
         creditCardExpiryDate: cardData.expiryDate,
         creditCardName: cardData.cardholderName,
+        
+        // Address info (shipping and billing)
+        shippingAddress: {
+          street1: addressData?.street1 || 'N/A',
+          street2: addressData?.street2 || '',
+          city: addressData?.city || 'Bogota',
+          state: addressData?.state || 'Cundinamarca',
+          country: addressData?.country || 'CO',
+          postalCode: addressData?.postalCode || '000000',
+        },
+        billingAddress: {
+          street1: addressData?.street1 || 'N/A',
+          street2: addressData?.street2 || '',
+          city: addressData?.city || 'Bogota',
+          state: addressData?.state || 'Cundinamarca',
+          country: addressData?.country || 'CO',
+          postalCode: addressData?.postalCode || '000000',
+        },
         
         // Response URLs
         responseUrl: `${window.location.origin}/payment/response`,

@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from '../components/ui/alert';
 import { Spinner } from '../components/ui/spinner';
 import { CheckCircle, CreditCard, Shield, AlertCircle } from 'lucide-react';
 import { PAYU_CONFIG, generateReferenceCode, createPaymentAPI } from '../lib/payu-api';
+import PaymentResultModal from '../components/PaymentResultModal';
 
 export default function SubscriptionPayment() {
   const navigate = useNavigate();
@@ -15,11 +16,22 @@ export default function SubscriptionPayment() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [subscription, setSubscription] = useState(null);
+  const [paymentResult, setPaymentResult] = useState(null);
   const [cardData, setCardData] = useState({
     cardNumber: '',
     cardholderName: '',
     expiryDate: '',
     cvv: '',
+  });
+  const [addressData, setAddressData] = useState({
+    dniNumber: '',
+    phone: '',
+    street1: '',
+    street2: '',
+    city: 'Bogota',
+    state: 'Cundinamarca',
+    country: 'CO',
+    postalCode: '',
   });
 
   useEffect(() => {
@@ -70,6 +82,13 @@ export default function SubscriptionPayment() {
         return;
       }
 
+      // Validate address data
+      if (!addressData.dniNumber || !addressData.phone || !addressData.street1 || !addressData.city || !addressData.postalCode) {
+        setError('Por favor completa toda tu información de dirección.');
+        setLoading(false);
+        return;
+      }
+
       const referenceCode = generateReferenceCode(user.id);
 
       // Create a pending subscription record
@@ -89,7 +108,7 @@ export default function SubscriptionPayment() {
       }
 
       // Process payment via API
-      const paymentResult = await createPaymentAPI(user, cardData, referenceCode);
+      const paymentResult = await createPaymentAPI(user, cardData, referenceCode, addressData);
       
       console.log('[Payment] Result:', paymentResult);
 
@@ -115,10 +134,21 @@ export default function SubscriptionPayment() {
           }
           
           console.log('[Payment] Subscription activated successfully');
-          navigate('/dashboard', { state: { paymentSuccess: true } });
+          
+          // Show approval modal instead of redirecting immediately
+          setPaymentResult({
+            status: 'approved',
+            message: 'Tu pago ha sido procesado exitosamente. Tu suscripción ya está activa.',
+            transactionId: paymentResult.transactionId,
+          });
+          setLoading(false);
         } catch (dbError) {
           console.error('[Payment] Database error:', dbError);
-          setError('Pago aprobado pero hubo un error actualizando tu suscripción. Contacta soporte.');
+          setPaymentResult({
+            status: 'approved',
+            message: 'Pago aprobado pero hubo un error actualizando tu suscripción. Contacta soporte.',
+            transactionId: paymentResult.transactionId,
+          });
           setLoading(false);
         }
         return;
@@ -133,14 +163,22 @@ export default function SubscriptionPayment() {
 
       // If payment was declined or error
       if (paymentResult.transactionState === '6' || paymentResult.transactionState === '104' || paymentResult.success === false) {
-        setError(paymentResult.responseMessage || 'Pago rechazado. Por favor intenta con otro método o tarjeta.');
+        setPaymentResult({
+          status: 'declined',
+          message: paymentResult.responseMessage || 'Pago rechazado. Por favor intenta con otro método o tarjeta.',
+          transactionId: paymentResult.transactionId,
+        });
         setLoading(false);
         return;
       }
 
       // If payment is pending
       if (paymentResult.transactionState === '7') {
-        setError('Tu pago está pendiente. Te notificaremos cuando se procese.');
+        setPaymentResult({
+          status: 'pending',
+          message: 'Tu pago está pendiente. Te notificaremos cuando se procese.',
+          transactionId: paymentResult.transactionId,
+        });
         setLoading(false);
         return;
       }
@@ -153,6 +191,26 @@ export default function SubscriptionPayment() {
       setError(err.message || 'Error al procesar el pago. Por favor intenta nuevamente.');
       setLoading(false);
     }
+  };
+
+  const handlePaymentResultContinue = () => {
+    if (paymentResult.status === 'approved') {
+      navigate('/dashboard', { state: { paymentSuccess: true } });
+    } else if (paymentResult.status === 'declined') {
+      setPaymentResult(null);
+      setCardData({
+        cardNumber: '',
+        cardholderName: '',
+        expiryDate: '',
+        cvv: '',
+      });
+    } else if (paymentResult.status === 'pending') {
+      navigate('/dashboard', { state: { paymentProcessing: true } });
+    }
+  };
+
+  const handlePaymentResultClose = () => {
+    setPaymentResult(null);
   };
 
   if (!user) {
@@ -304,6 +362,88 @@ export default function SubscriptionPayment() {
             </p>
           </div>
 
+          {/* Billing and Shipping Information */}
+          <div className="space-y-4 border-t pt-6">
+            <h3 className="font-semibold">Información de Facturación y Envío</h3>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium block mb-2">Número de Identificación (DNI/CC)</label>
+                <input
+                  type="text"
+                  placeholder="1234567890"
+                  value={addressData.dniNumber}
+                  onChange={(e) => setAddressData({ ...addressData, dniNumber: e.target.value })}
+                  className="w-full px-4 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium block mb-2">Teléfono</label>
+                <input
+                  type="tel"
+                  placeholder="5700000000"
+                  value={addressData.phone}
+                  onChange={(e) => setAddressData({ ...addressData, phone: e.target.value })}
+                  className="w-full px-4 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium block mb-2">Dirección (Calle y Número)</label>
+              <input
+                type="text"
+                placeholder="Cra 7 #45-32"
+                value={addressData.street1}
+                onChange={(e) => setAddressData({ ...addressData, street1: e.target.value })}
+                className="w-full px-4 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium block mb-2">Apartamento/Suite (Opcional)</label>
+              <input
+                type="text"
+                placeholder="Apto 502"
+                value={addressData.street2}
+                onChange={(e) => setAddressData({ ...addressData, street2: e.target.value })}
+                className="w-full px-4 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label className="text-sm font-medium block mb-2">Ciudad</label>
+                <input
+                  type="text"
+                  placeholder="Bogota"
+                  value={addressData.city}
+                  onChange={(e) => setAddressData({ ...addressData, city: e.target.value })}
+                  className="w-full px-4 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium block mb-2">Departamento</label>
+                <input
+                  type="text"
+                  placeholder="Cundinamarca"
+                  value={addressData.state}
+                  onChange={(e) => setAddressData({ ...addressData, state: e.target.value })}
+                  className="w-full px-4 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium block mb-2">Código Postal</label>
+                <input
+                  type="text"
+                  placeholder="110121"
+                  value={addressData.postalCode}
+                  onChange={(e) => setAddressData({ ...addressData, postalCode: e.target.value })}
+                  className="w-full px-4 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+            </div>
+
           {/* Action Buttons */}
           <div className="space-y-3">
             <Button 
@@ -329,6 +469,16 @@ export default function SubscriptionPayment() {
           </p>
         </CardContent>
       </Card>
+
+      {/* Payment Result Modal */}
+      <PaymentResultModal 
+        isOpen={!!paymentResult}
+        status={paymentResult?.status}
+        message={paymentResult?.message}
+        transactionId={paymentResult?.transactionId}
+        onContinue={handlePaymentResultContinue}
+        onClose={handlePaymentResultClose}
+      />
     </div>
   );
 }
