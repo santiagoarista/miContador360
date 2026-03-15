@@ -2,8 +2,6 @@
 // Using REST API with 3DS Authentication
 // Documentation: https://developers.payulatam.com/latam/es/docs/integrations/api-integration.html
 
-import { supabase } from './supabase';
-
 // PayU Configuration
 export const PAYU_CONFIG = {
   MERCHANT_ID: import.meta.env.VITE_PAYU_MERCHANT_ID || '1020873',
@@ -30,7 +28,7 @@ export const generateReferenceCode = (userId) => {
 
 /**
  * Create PayU payment request via API
- * Sends to Supabase Edge Function which forwards to PayU
+ * Sends directly to Supabase Edge Function (bypass auth)
  */
 export const createPaymentAPI = async (user, cardData, referenceCode) => {
   try {
@@ -41,9 +39,15 @@ export const createPaymentAPI = async (user, cardData, referenceCode) => {
       throw new Error('Datos de tarjeta incompletos');
     }
     
-    // Call Supabase Edge Function to process payment
-    const response = await supabase.functions.invoke('payu-payment', {
-      body: {
+    // Call Edge Function directly via fetch (no Supabase auth required)
+    const functionUrl = 'https://zijpwpflpuqyuwqnsrme.supabase.co/functions/v1/payu-payment';
+    
+    const response = await fetch(functionUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
         merchantId: PAYU_CONFIG.MERCHANT_ID,
         apiLogin: PAYU_CONFIG.API_LOGIN,
         apiKey: PAYU_CONFIG.API_KEY,
@@ -71,16 +75,19 @@ export const createPaymentAPI = async (user, cardData, referenceCode) => {
         // Response URLs
         responseUrl: `${window.location.origin}/payment/response`,
         confirmationUrl: 'https://zijpwpflpuqyuwqnsrme.supabase.co/functions/v1/payu-confirmation',
-      }
+      })
     });
 
-    console.log('[PayU] API Response:', response);
+    console.log('[PayU] API Response status:', response.status);
     
-    if (response.error) {
-      throw new Error(response.error.message || 'Error processing payment');
+    if (!response.ok) {
+      throw new Error(`Edge Function returned HTTP ${response.status}`);
     }
 
-    return response.data;
+    const data = await response.json();
+    console.log('[PayU] API Response data:', data);
+    
+    return data;
   } catch (error) {
     console.error('[PayU] API Error:', error);
     throw error;
