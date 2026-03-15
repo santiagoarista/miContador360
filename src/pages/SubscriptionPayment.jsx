@@ -443,6 +443,7 @@ export default function SubscriptionPayment() {
                 />
               </div>
             </div>
+          </div>
 
           {/* Action Buttons */}
           <div className="space-y-3">

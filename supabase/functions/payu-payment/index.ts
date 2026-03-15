@@ -7,6 +7,14 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type',
 };
 
+interface PaymentResult {
+  success: boolean;
+  transactionState: string | null;
+  transactionId: string | null;
+  orderId?: string | null;
+  responseMessage: string | null;
+}
+
 // Simple SHA256 hash (PayU accepts SHA256 as signature)
 const calculateSignature = async (text: string): Promise<string> => {
   const encoder = new TextEncoder();
@@ -205,16 +213,14 @@ serve(async (req: Request): Promise<Response> => {
     console.log('[PayU] Raw response (first 1000 chars):', responseText.substring(0, 1000));
     
     let responseData;
-    let isXml = false;
     
     // Try to parse as JSON first
     try {
       responseData = JSON.parse(responseText);
       console.log('[PayU] Successfully parsed response as JSON');
-    } catch (jsonError) {
+    } catch (_jsonError) {
       // If JSON parsing fails, try XML
       console.log('[PayU] Response is not JSON, attempting XML parse');
-      isXml = true;
       
       // Simple XML parser - extract key data
       try {
@@ -237,8 +243,8 @@ serve(async (req: Request): Promise<Response> => {
         
         console.log('[PayU] Successfully parsed XML response');
         console.log('[PayU] Parsed XML:', JSON.stringify(responseData, null, 2));
-      } catch (xmlError) {
-        console.error('[PayU] Failed to parse XML:', xmlError);
+      } catch (_xmlError) {
+        console.error('[PayU] Failed to parse XML:', _xmlError);
         return new Response(
           JSON.stringify({ 
             success: false,
@@ -254,7 +260,7 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     // Parse PayU response
-    let result: any = {
+    const result: PaymentResult = {
       success: false,
       transactionState: null,
       transactionId: null,
