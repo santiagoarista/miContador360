@@ -149,6 +149,7 @@ export const createPaymentFormData = async (user, referenceCode) => {
     amount: amount,
     currency: PAYU_CONFIG.CURRENCY,
     signature: signature,
+    language: PAYU_CONFIG.LANGUAGE,
     test: 1,
     buyerEmail: user.email,
     responseUrl: dynamicConfig.response_url,
