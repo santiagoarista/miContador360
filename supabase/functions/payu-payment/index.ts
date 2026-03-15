@@ -5,9 +5,15 @@ import { serve } from "std/http/server.ts";
 import { createClient } from "@supabase/supabase-js";
 
 serve(async (req: Request): Promise<Response> => {
-  // Handle CORS
+  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: { 'Access-Control-Allow-Origin': '*' } });
+    return new Response('ok', {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      },
+    });
   }
 
   if (req.method !== 'POST') {
@@ -176,7 +182,10 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     return new Response(JSON.stringify(result), {
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
     });
   } catch (error) {
     console.error('[PayU Function] Error:', error);
@@ -184,7 +193,10 @@ serve(async (req: Request): Promise<Response> => {
       JSON.stringify({ error: 'Internal server error', details: (error as Error).message }),
       {
         status: 500,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
       }
     );
   }
