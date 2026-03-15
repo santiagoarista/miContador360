@@ -93,6 +93,37 @@ export default function SubscriptionPayment() {
       
       console.log('[Payment] Result:', paymentResult);
 
+      // If payment was successful (approved)
+      if (paymentResult.success === true || paymentResult.transactionState === 'APPROVED' || paymentResult.transactionState === '4') {
+        console.log('[Payment] Payment approved, updating subscription...');
+        
+        // Update subscription to active in database
+        try {
+          const { error: updateError } = await supabase
+            .from('subscriptions')
+            .update({
+              status: 'active',
+              payu_transaction_id: paymentResult.transactionId,
+              payu_order_id: paymentResult.orderId,
+              activated_at: new Date().toISOString(),
+            })
+            .eq('user_id', user.id);
+          
+          if (updateError) {
+            console.error('[Payment] Error updating subscription:', updateError);
+            throw updateError;
+          }
+          
+          console.log('[Payment] Subscription activated successfully');
+          navigate('/dashboard', { state: { paymentSuccess: true } });
+        } catch (dbError) {
+          console.error('[Payment] Database error:', dbError);
+          setError('Pago aprobado pero hubo un error actualizando tu suscripción. Contacta soporte.');
+          setLoading(false);
+        }
+        return;
+      }
+
       // If response has a 3DS redirect URL, go there
       if (paymentResult.threeDomainSecurityUrl) {
         console.log('[Payment] Redirecting to 3DS:', paymentResult.threeDomainSecurityUrl);
@@ -100,15 +131,9 @@ export default function SubscriptionPayment() {
         return;
       }
 
-      // If payment was approved immediately
-      if (paymentResult.transactionState === '4') {
-        navigate('/dashboard', { state: { paymentSuccess: true } });
-        return;
-      }
-
       // If payment was declined or error
-      if (paymentResult.transactionState === '6' || paymentResult.transactionState === '104') {
-        setError('Pago rechazado. Por favor intenta con otro método o tarjeta.');
+      if (paymentResult.transactionState === '6' || paymentResult.transactionState === '104' || paymentResult.success === false) {
+        setError(paymentResult.responseMessage || 'Pago rechazado. Por favor intenta con otro método o tarjeta.');
         setLoading(false);
         return;
       }

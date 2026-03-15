@@ -205,46 +205,85 @@ serve(async (req: Request): Promise<Response> => {
     console.log('[PayU] Raw response (first 1000 chars):', responseText.substring(0, 1000));
     
     let responseData;
+    let isXml = false;
+    
+    // Try to parse as JSON first
     try {
       responseData = JSON.parse(responseText);
-    } catch (parseError) {
-      console.error('[PayU] Failed to parse response as JSON');
-      console.error('[PayU] Parse error:', parseError.message);
+      console.log('[PayU] Successfully parsed response as JSON');
+    } catch (jsonError) {
+      // If JSON parsing fails, try XML
+      console.log('[PayU] Response is not JSON, attempting XML parse');
+      isXml = true;
       
-      // PayU returned XML or error - return detailed error
-      return new Response(
-        JSON.stringify({ 
-          success: false,
-          error: 'PayU returned invalid/XML response - check logs',
-          responsePreview: responseText.substring(0, 300),
-        }),
-        {
-          status: 200,
-          headers: { 'Content-Type': 'application/json', ...corsHeaders },
-        }
-      );
+      // Simple XML parser - extract key data
+      try {
+        const codeMatch = responseText.match(/<code>(\w+)<\/code>/);
+        const transactionIdMatch = responseText.match(/<transactionId>([^<]+)<\/transactionId>/);
+        const stateMatch = responseText.match(/<state>([^<]+)<\/state>/);
+        const orderIdMatch = responseText.match(/<orderId>(\d+)<\/orderId>/);
+        const errorMatch = responseText.match(/<error>([^<]+)<\/error>/);
+        
+        responseData = {
+          code: codeMatch ? codeMatch[1] : 'ERROR',
+          transactionResponse: {
+            transactionId: transactionIdMatch ? transactionIdMatch[1] : null,
+            state: stateMatch ? stateMatch[1] : null,
+            orderId: orderIdMatch ? orderIdMatch[1] : null,
+            responseMessage: errorMatch ? errorMatch[1] : 'Unknown error',
+          },
+          error: errorMatch ? errorMatch[1] : null,
+        };
+        
+        console.log('[PayU] Successfully parsed XML response');
+        console.log('[PayU] Parsed XML:', JSON.stringify(responseData, null, 2));
+      } catch (xmlError) {
+        console.error('[PayU] Failed to parse XML:', xmlError);
+        return new Response(
+          JSON.stringify({ 
+            success: false,
+            error: 'Failed to parse PayU response',
+            raw: responseText.substring(0, 500),
+          }),
+          {
+            status: 200,
+            headers: { 'Content-Type': 'application/json', ...corsHeaders },
+          }
+        );
+      }
     }
-
-    console.log('[PayU] Successfully parsed response JSON');
 
     // Parse PayU response
     let result: any = {
       success: false,
       transactionState: null,
       transactionId: null,
-      threeDomainSecurityUrl: null,
+      responseMessage: null,
     };
 
+    // Check if response indicates success
     if (responseData.code === 'SUCCESS' && responseData.transactionResponse) {
       const txResp = responseData.transactionResponse;
-      result.success = txResp.state === 'APPROVED';
-      result.transactionState = txResp.state;
-      result.transactionId = txResp.transactionId;
-      result.responseMessage = txResp.responseMessage;
+      
+      // Check if transaction state is APPROVED
+      if (txResp.state === 'APPROVED' || txResp.state === 'AUTHORIZATION_AND_CAPTURE') {
+        result.success = true;
+        result.transactionState = 'APPROVED';
+        result.transactionId = txResp.transactionId;
+        result.orderId = txResp.orderId;
+        result.responseMessage = 'Payment approved';
+      } else {
+        result.success = false;
+        result.transactionState = txResp.state || 'UNKNOWN';
+        result.responseMessage = txResp.responseMessage || 'Payment not approved';
+      }
     } else {
-      result.payuError = responseData.error || 'Unknown error from PayU';
-      result.transactionState = responseData.transactionResponse?.state || null;
+      result.success = false;
+      result.responseMessage = responseData.error || 'Payment failed';
+      result.transactionState = 'FAILED';
     }
+
+    console.log('[PayU] Final result:', result);
 
     return new Response(JSON.stringify(result), {
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
