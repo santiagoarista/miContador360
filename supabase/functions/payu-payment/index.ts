@@ -37,20 +37,48 @@ serve(async (req: Request): Promise<Response> => {
       referenceCode: paymentData.referenceCode,
     });
 
-    // Parse and convert expiry date: MM/YY -> YYYY/MM
+    // Parse and convert expiry date: handle both formats
+    // Input can be: "0628" (no slash) or "06/28" (with slash)
+    // Output must be: "2028/06" (YYYY/MM format)
     let expirationDate = paymentData.creditCardExpiryDate;
-    if (expirationDate && expirationDate.includes('/')) {
-      const [month, year] = expirationDate.split('/');
-      const fullYear = year.length === 2 ? `20${year}` : year;
-      expirationDate = `${fullYear}/${month}`;
-      console.log('[PayU] Expiry date converted:', {
-        from: paymentData.creditCardExpiryDate,
-        to: expirationDate,
-      });
+    console.log('[PayU] Raw expiry input:', expirationDate);
+    
+    if (expirationDate) {
+      let month = '';
+      let year = '';
+      
+      if (expirationDate.includes('/')) {
+        // Format: 06/28
+        const parts = expirationDate.split('/');
+        month = parts[0];
+        year = parts[1];
+      } else if (expirationDate.length === 4) {
+        // Format: 0628
+        month = expirationDate.substring(0, 2);
+        year = expirationDate.substring(2, 4);
+      }
+      
+      if (month && year) {
+        const fullYear = year.length === 2 ? `20${year}` : year;
+        expirationDate = `${fullYear}/${month}`;
+        console.log('[PayU] Expiry date converted:', {
+          from: paymentData.creditCardExpiryDate,
+          to: expirationDate,
+        });
+      }
     }
 
+    // ALWAYS use PayU Sandbox credentials (ignore frontend values)
+    // Official PayU sandbox test credentials
+    const apiLogin = 'pRRXKOl8ikMmt9u';
+    const apiKey = '4Vj8eK4rloUd272L48hsrarnUA';
+    const merchantId = '508029';
+    const accountId = '512321';
+    
+    console.log('[PayU] Using SANDBOX credentials (forced)');
+    
     // Calculate signature: apiKey~merchantId~referenceCode~amount~currency
-    const signatureInput = `${paymentData.apiKey}~${paymentData.merchantId}~${paymentData.referenceCode}~${paymentData.amount}~${paymentData.currency}`;
+    const signatureInput = `${apiKey}~${merchantId}~${paymentData.referenceCode}~${paymentData.amount}~${paymentData.currency}`;
     const signature = await calculateSignature(signatureInput);
     
     console.log('[PayU] Signature:', { input: signatureInput, hash: signature });
@@ -61,12 +89,12 @@ serve(async (req: Request): Promise<Response> => {
       language: 'es',
       command: 'SUBMIT_TRANSACTION',
       merchant: {
-        apiLogin: paymentData.apiLogin,
-        apiKey: paymentData.apiKey,
+        apiLogin: apiLogin,
+        apiKey: apiKey,
       },
       transaction: {
         order: {
-          accountId: paymentData.accountId,
+          accountId: accountId,
           referenceCode: paymentData.referenceCode,
           description: paymentData.description,
           language: 'es',
