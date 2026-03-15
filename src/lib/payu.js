@@ -142,16 +142,25 @@ export const createPaymentFormData = async (user, referenceCode) => {
   });
   
   return {
+    // Parámetros obligatorios según PayU docs
     merchantId: PAYU_CONFIG.MERCHANT_ID,
     accountId: PAYU_CONFIG.ACCOUNT_ID,
     description: 'Suscripción Mensual - Sistema Contable',
     referenceCode: referenceCode,
     amount: amount,
+    tax: '0',
+    taxReturnBase: '0',
     currency: PAYU_CONFIG.CURRENCY,
     signature: signature,
     language: PAYU_CONFIG.LANGUAGE,
     test: 1,
+    
+    // Información del comprador
+    buyerFullName: user.email.split('@')[0], // Usa parte del email como nombre
     buyerEmail: user.email,
+    buyerPhone: '0000000000', // Requerido por PayU
+    
+    // URLs
     responseUrl: dynamicConfig.response_url,
     confirmationUrl: dynamicConfig.confirmation_url,
   };
