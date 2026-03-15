@@ -2,24 +2,23 @@
 // Handles payment requests and forwards to PayU API
 
 import { serve } from "std/http/server.ts";
-import { createClient } from "@supabase/supabase-js";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-client-info, apikey, x-supabase-auth',
+};
 
 serve(async (req: Request): Promise<Response> => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response('ok', {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-client-info, apikey',
-      },
-    });
+    return new Response('ok', { headers: corsHeaders });
   }
 
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
       status: 405,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...corsHeaders },
     });
   }
 
@@ -144,47 +143,20 @@ serve(async (req: Request): Promise<Response> => {
 
     if (responseData.code === 'SUCCESS' && responseData.transactionResponse) {
       const txResponse = responseData.transactionResponse;
-      result = {
-        success: txResponse.state === 'AUTHORIZATION_AND_CAPTURE' || txResponse.responseCode === 'APPROVED',
-        transactionState: txResponse.responseCode === 'APPROVED' ? '4' : '6',
-        transactionId: txResponse.transactionId,
-        // Check for 3DS redirect
-        threeDomainSecurityUrl: txResponse.threeDomainSecurityUrl || null,
-      };
+      result.success = txResponse.state === 'AUTHORIZATION_AND_CAPTURE' || txResponse.responseCode === 'APPROVED';
+      result.transactionState = txResponse.responseCode === 'APPROVED' ? '4' : '6';
+      result.transactionId = txResponse.transactionId;
+      result.threeDomainSecurityUrl = txResponse.threeDomainSecurityUrl || null;
     } else if (responseData.error) {
       console.error('[PayU Function] PayU Error:', responseData.error);
       result.success = false;
       result.transactionState = '104';
     }
 
-    // Update subscription in Supabase if needed
-    if (result.success) {
-      const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
-      const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
-      
-      if (supabaseUrl && supabaseKey) {
-        const supabase = createClient(supabaseUrl, supabaseKey);
-        
-        const { error: updateError } = await supabase
-          .from('subscriptions')
-          .update({
-            status: 'active',
-            payu_transaction_id: result.transactionId,
-            subscription_start_date: new Date().toISOString(),
-            subscription_end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-          })
-          .eq('payu_reference_code', paymentData.referenceCode);
-
-        if (updateError) {
-          console.error('[PayU Function] Error updating subscription:', updateError);
-        }
-      }
-    }
-
     return new Response(JSON.stringify(result), {
       headers: { 
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
+        ...corsHeaders,
       },
     });
   } catch (error) {
@@ -195,7 +167,7 @@ serve(async (req: Request): Promise<Response> => {
         status: 500,
         headers: { 
           'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
+          ...corsHeaders,
         },
       }
     );
